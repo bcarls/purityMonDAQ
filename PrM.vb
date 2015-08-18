@@ -231,7 +231,7 @@ Module PrM
 		FileClose(77)
 		
 		
-		FileOpen(7, LogPath & "Run" & VB6.Format(iiRun, "00n0000") & "." & IPrM & "." & iiFile & ".LogData.csv", OpenMode.Output)
+        FileOpen(7, LogPath & "Run" & VB6.Format(iiRun, "000000") & "." & IPrM & "." & iiFile & ".LogData.csv", OpenMode.Output)
 		On Error GoTo 0
 		PrintLine(7, "[Data]")
 		PrintLine(7, "Tagname,TimeStamp,Value")
@@ -263,7 +263,7 @@ Module PrM
 		End If
 		FileClose(7)
 		
-		FileCopy(LogPath & "Run" & VB6.Format(iiRun, "00n0000") & "." & IPrM & "." & iiFile & ".LogData.csv", "Y:\" & "Run" & VB6.Format(iiRun, "00n0000") & "." & IPrM & "." & iiFile & ".LogData.csv")
+        FileCopy(LogPath & "Run" & VB6.Format(iiRun, "000000") & "." & IPrM & "." & iiFile & ".LogData.csv", "Y:\" & "Run" & VB6.Format(iiRun, "000000") & "." & IPrM & "." & iiFile & ".LogData.csv")
 		
 		
 		
