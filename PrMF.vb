@@ -87,57 +87,30 @@ Friend Class PrMF
             Exit Sub
         End If
     End Sub
-	
-	
 
-	
-	Private Sub Command1_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles Command1.Click
-		NullCmd.Focus()
-		If iRunning = 1 Then Exit Sub
-		If Command1.Text = "DAQ Stopped - Press to Start DAQ" Then
-			Command1.Text = "DAQ Running - Press to Stop"
-			StatusL.Text = "DAQ Started"
-			xRate = 1 'cause to do one right now
-			NullCmd.Focus()
-			FileOpen(88, DataFileNameHist, OpenMode.Append)
-			PrintLine(88, "+++++++" & Today & " " & TimeOfDay & " DAQ Started")
-			FileClose(88)
-		Else
-			Command1.Text = "DAQ Stopped - Press to Start DAQ"
-			StatusL.Text = "DAQ Stopped"
-			NullCmd.Focus()
-			FileOpen(88, DataFileNameHist, OpenMode.Append)
-			PrintLine(88, "-------" & Today & " " & TimeOfDay & " DAQ Stopped")
-			FileClose(88)
-		End If
-	End Sub
-	
-	
-	
-	
-	
-	Private Sub Command2_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles Command2.Click
-		Out(Val("&H37a"), 15)
-		FileOpen(3, xPath & "Run_num.ini", OpenMode.Input)
-		Input(3, iiRun)
-		iiRun = iiRun
-		FileClose(3)
-		FileOpen(3, xPath & "Run_num.ini", OpenMode.Output)
-		PrintLine(3, iiRun)
-		FileClose(3)
-		RunNumL.Text = VB6.Format(iiRun, "######")
-		DataFileName = DataFilePath & "Run_" & VB6.Format(iiRun, "000000") & ".txt"
-		RunFileL.Text = DataFileName
-		'ScopeWait.Enabled = True
-		Out(Val("&H37a"), 0)
-		
-	End Sub
-	
-	Private Sub Command3_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles Command3.Click
-		Me.PrintForm1.Print(Me, PowerPacks.Printing.PrintForm.PrintOption.CompatibleModeClientAreaOnly)
-	End Sub
-	
-	Private Sub Command5_Click()
+
+
+
+    Private Sub Command1_Click(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles Command1.Click
+        If iRunning = 1 Then Exit Sub
+        If Command1.Text = "DAQ Stopped - Press to Start DAQ" Then
+            Command1.Text = "DAQ Running - Press to Stop"
+            StatusL.Text = "DAQ Started"
+            xRate = 1 'cause to do one right now
+            FileOpen(88, DataFileNameHist, OpenMode.Append)
+            PrintLine(88, "+++++++" & Today & " " & TimeOfDay & " DAQ Started")
+            FileClose(88)
+        Else
+            Command1.Text = "DAQ Stopped - Press to Start DAQ"
+            StatusL.Text = "DAQ Stopped"
+            FileOpen(88, DataFileNameHist, OpenMode.Append)
+            PrintLine(88, "-------" & Today & " " & TimeOfDay & " DAQ Stopped")
+            FileClose(88)
+        End If
+    End Sub
+
+
+    Private Sub Command5_Click()
 		' Check to see if the current device is really connected to something
 		Dim systemID As Object
 		Dim boardID As Integer
@@ -1965,7 +1938,5 @@ cmdGetWFMErr1:
 		End Select
 		
 	End Function
-	
-	
 
 End Class

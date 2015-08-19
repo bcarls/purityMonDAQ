@@ -264,13 +264,28 @@ Module PrM
 		FileClose(7)
 		
         FileCopy(LogPath & "Run" & VB6.Format(iiRun, "000000") & "." & IPrM & "." & iiFile & ".LogData.csv", "Y:\" & "Run" & VB6.Format(iiRun, "000000") & "." & IPrM & "." & iiFile & ".LogData.csv")
-		
-		
-		
-		' Send to slow controls via Winsock
-		' This is a little strange, we need to use a variable, PrMID in this case, to hold the value of IPrM while the While sckConnected
-		' loop is happening, otherwise the program will procede forward and set IPrM back to zero
-		Dim PrMID As Short
+
+
+
+
+
+
+        If PrMF.CheckBoxDropbox.CheckState = 1 Then
+            FileOpen(7, "C:\Users\bcarls\Dropbox\PrM_Logs\lifetimes_0" & IPrM & "_" & VB6.Format(iiRun, "000000") & ".txt", OpenMode.Output)
+            PrintLine(7, VB6.Format(iiRun, "000000") & " " & Today.Month & " " & Today.Day & " " & Today.Year & " " & VB6.Format(TimeOfDay, " HH mm ss ") & VB6.Format(fLifeTime, "0.000e-00") & " " & VB6.Format(fCatTrue, "0.000e-00") & " " & VB6.Format(fAnoTrue, "0.000e-00") & " " & VB6.Format(CathF, "0.000e-00") & " " & VB6.Format(AnoF, "0.000e-00"))
+            FileClose(7)
+        End If
+
+
+
+
+
+
+
+        ' Send to slow controls via Winsock
+        ' This is a little strange, we need to use a variable, PrMID in this case, to hold the value of IPrM while the While sckConnected
+        ' loop is happening, otherwise the program will procede forward and set IPrM back to zero
+        Dim PrMID As Short
 		PrMID = IPrM
 		PrMF.Winsock1.Close()
 		PrMF.Winsock1.RemoteHost = PrMF.Text7.Text
