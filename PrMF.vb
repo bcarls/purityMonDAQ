@@ -204,12 +204,14 @@ cmdGetWFMErr:
 		'''''''''''''''''''''''''''''''
 		'ImagePath = "F:\"
 		ImagePath = "C:\PrM Images\"
-		'OneTrueLiquid = 1
-		ISets = 1
-		'Label1(1).ToolTipText = "Low is good...Dbl Click to Change"
-		RMSCut = 10#
-		
-		ISmooth = 40
+        'OneTrueLiquid = 1
+        'Label1(1).ToolTipText = "Low is good...Dbl Click to Change"
+        RMSCut = 10.0#
+
+        ' Number of captures to perform during a run
+        numberOfCaptures = 4
+
+        ISmooth = 40
 		IRate = 240
 		xRate = IRate * 60
 		Dim xinc As Short
@@ -371,9 +373,7 @@ cmdGetWFMErr:
         List3.Items.Add(" IRate = " & IRate)
         List3.Items.Add(" IRunning = " & iRunning)
         List3.Items.Add(" LiquidWait = " & LiquidWait)
-        List3.Items.Add(" PassCount = " & PassCnt)
         'List3.AddItem " OneTrueLiquid = " & OneTrueLiquid
-        List3.Items.Add(" ISets = " & ISets)
         List3.Items.Add(TimeOfDay & " " & Today)
         'List3.AddItem "check4(0) " & Check4(0)
         'List3.AddItem "check4(1) " & Check4(1)
@@ -416,7 +416,6 @@ cmdGetWFMErr:
             PrintLine(3, iiRun)
             ' MsgBox xPath
             FileClose(3)
-            PassCnt = 0
             ' This is a function call, think TakeData()
             TakeData()
             '    Out Val("&H378"), IPrM + Data7On 'turn on pulser
@@ -500,12 +499,11 @@ cmdGetWFMErr:
 		'    DataFileName = DataFilePath & "Run_" & Format(iiRun, "000000") & "_" & Format(IPrM, "00") & ".txt"
 		RunFileL.BackColor = System.Drawing.ColorTranslator.FromOle(&HFFFFFF)
 		RunFileL.ForeColor = System.Drawing.ColorTranslator.FromOle(0)
-		'    RunFileL.Caption = DataFileName
-		'    PulserWait.Interval = 30000
-		'    PulserWait.Enabled = True
-		'    Out Val("&H37a"), 15 'turn on pulser
-		PassCnt = 0
-		TakeData()
+        '    RunFileL.Caption = DataFileName
+        '    PulserWait.Interval = 30000
+        '    PulserWait.Enabled = True
+        '    Out Val("&H37a"), 15 'turn on pulser
+        TakeData()
 		'    Out Val("&H378"), IPrM + Data7On 'turn on pulser
 		StatusL.Text = "Pulser Turned ON, PrM = " & IPrM
 		LiquidWait = 0
@@ -526,51 +524,46 @@ cmdGetWFMErr:
 	
 	Private Sub PulserWait_Tick(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles PulserWait.Tick
         PulserWait.Interval = 60000
-		PassCnt = PassCnt + 1
-		'    Out Val("&H37a"), 0
-		'    Out Val("&H37a"), 15
-		'Out Val("&H37a"), 0
-		If PassCnt <= ISets Then
-			StatusL.Text = "Taking Data PrM = " & IPrM & " Pass = " & PassCnt
-			ScopeWait.Enabled = True
-			'       If PassCnt < ISets Then
-			'               Out Val("&H378"), 8 + Data7On 'turn off pulse
-			'               TakeData
-			'       End If
-		End If
-		If PassCnt >= ISets + 1 Then
-			IPrM = IPrM + 1
-			Do While (IPrM < NPrM)
-				If Check4(IPrM).CheckState = 1 And Check4(IPrM).Enabled = True Then Exit Do
-				IPrM = IPrM + 1
-			Loop 
-			If IPrM = NPrM Then
-				'            Out Val("&H37a"), 0 'turn off pulser
-				' 64=2^6, turns off TPC veto for bit D6
-				Out(Val("&H378"), 8 + Data7On + 64) 'turn off pulse
-				PassCnt = 0
-				PulserWait.Enabled = False
-				iRunning = 0
-				IPrM = 0
-				'Command1.Enabled = True
-				StatusL.Text = "Waiting for Next Interval"
-				Exit Sub
-			End If
-			If IPrM < NPrM Then
-				'            RunNumL.Caption = Format(iiRun, "#0000") & "_" & Format(IPrM, "00")
-				'            DataFileName = DataFilePath & "Run_" & Format(iiRun, "000000") & "_" & Format(IPrM, "00") & ".txt"
-				'            RunFileL.Caption = DataFileName
-				'            PulserWait.Interval = 30000
-				'            PulserWait.Enabled = True
-				'           Out Val("&H37a"), 15 'turn on pulser
-				PassCnt = 0
-				TakeData()
-				'            Out Val("&H378"), IPrM + Data7On 'turn on pulser
-				StatusL.Text = "Pulser Turned ON, PrM = " & IPrM
-				iiFile = 1
-			End If
-		End If
-	End Sub
+        ' PassCnt = PassCnt + 1
+        '    Out Val("&H37a"), 0
+        '    Out Val("&H37a"), 15
+        'Out Val("&H37a"), 0
+        If captureCount < numberOfCaptures Then
+            StatusL.Text = "Taking Data PrM = " & IPrM
+            ScopeWait.Enabled = True
+        End If
+        If captureCount >= numberOfCaptures Then
+            IPrM = IPrM + 1
+            Do While (IPrM < NPrM)
+                If Check4(IPrM).CheckState = 1 And Check4(IPrM).Enabled = True Then Exit Do
+                IPrM = IPrM + 1
+            Loop
+            If IPrM = NPrM Then
+                '            Out Val("&H37a"), 0 'turn off pulser
+                ' 64=2^6, turns off TPC veto for bit D6
+                Out(Val("&H378"), 8 + Data7On + 64) 'turn off pulse
+                PulserWait.Enabled = False
+                iRunning = 0
+                IPrM = 0
+                'Command1.Enabled = True
+                StatusL.Text = "Waiting for Next Interval"
+                Exit Sub
+            End If
+            If IPrM < NPrM Then
+                '            RunNumL.Caption = Format(iiRun, "#0000") & "_" & Format(IPrM, "00")
+                '            DataFileName = DataFilePath & "Run_" & Format(iiRun, "000000") & "_" & Format(IPrM, "00") & ".txt"
+                '            RunFileL.Caption = DataFileName
+                '            PulserWait.Interval = 30000
+                '            PulserWait.Enabled = True
+                '           Out Val("&H37a"), 15 'turn on pulser
+                'PassCnt = 0
+                TakeData()
+                '            Out Val("&H378"), IPrM + Data7On 'turn on pulser
+                StatusL.Text = "Pulser Turned ON, PrM = " & IPrM
+                iiFile = 1
+            End If
+        End If
+    End Sub
 	
 	Private Sub ScopeWait_Tick(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles ScopeWait.Tick
 		ScopeWait.Enabled = False
@@ -602,9 +595,8 @@ cmdGetWFMErr:
 		Dim preTriggerSamples As Integer
 		Dim postTriggerSamples As Integer
 		Dim samplesPerRecord As Integer
-		Dim recordsPerCapture As Integer
-		Dim numberOfCaptures As Integer
-		Dim captureTimeout_ms As Integer
+        Dim recordsPerCapture As Integer
+        Dim captureTimeout_ms As Integer
 		Dim channelMask As Integer
 		Dim channelCount As Integer
 		Dim channelsPerBoard As Integer
@@ -644,14 +636,13 @@ cmdGetWFMErr:
 		Dim i As Integer ' counter variable
 		Dim hUnits, vUnits As String ' variables for returning unit types
 		Dim samplesPerSec As Double
-		
-		FileOpen(33, DataFileName, OpenMode.Append)
-		' Print #33, Date & "  " & Time & "  Pass = " & PassCnt
-		
-		FileOpen(44, AllTracesFileName, OpenMode.Append)
-		
-		' Set the default return code to indicate failure
-		Dim AcquireData As Boolean
+
+
+
+
+
+        ' Set the default return code to indicate failure
+        Dim AcquireData As Boolean
 		AcquireData = False
 		
 		Dim DrawData As Boolean
@@ -665,13 +656,12 @@ cmdGetWFMErr:
 		
 		' The number of records taken while capturing
 		recordsPerCapture = 25
-		
-		' Number of captures to perform during a run
-		numberOfCaptures = 4
-		
-		' TODO: Select the amount of time, in milliseconds, to wait for the
-		' acquisiton to complete to on-board memory
-		captureTimeout_ms = 100000
+
+
+
+        ' TODO: Select the amount of time, in milliseconds, to wait for the
+        ' acquisiton to complete to on-board memory
+        captureTimeout_ms = 100000
 		
 		' TODO: Select which channels read from on-board memory (A, B, or both)
 		channelMask = CHANNEL_A Or CHANNEL_B
@@ -746,281 +736,284 @@ cmdGetWFMErr:
 		Dim sampleValue As Integer
 		Dim sampleVolts As Double
 		Dim zzzzzzz As Short
-		Dim jj As Short ' check to be sure returned value is an array
-		For capture_Renamed = 0 To numberOfCaptures - 1
-			
-			If capture_Renamed <> 0 Then
-				PrMParallelID = 0
-				If IPrM = 0 Then PrMParallelID = 32
-				If IPrM = 1 Then PrMParallelID = 1
-				If IPrM = 2 Then PrMParallelID = 2
-				Out(Val("&H378"), PrMParallelID + HVOn + Data7On) 'turn on pulser and HV, no inhibit this time since there is no TPC
-			End If
-			
-			' Update status
-			' TextStatus = TextStatus & "Capturing " & recordsPerCapture & " records" & vbCrLf
-			' TextStatus.Refresh
-			
-			' Arm the board to begin the acquisition
-			retCode = AlazarStartCapture(boardHandle)
-			If (retCode <> ApiSuccess) Then
-				MsgBox("Error: AlazarStartCapture failed -- " & AlazarErrorToText(retCode))
-				Exit Sub
-			End If
-			
-			' Wait for the board to capture all records to on-board memory
-			startTickCount = GetTickCount()
-			timeoutTickCount = startTickCount + captureTimeout_ms
-			captureDone = False
-			
-			Do While Not captureDone
-				If AlazarBusy(boardHandle) = 0 Then
-					' All records have been captured to on-board memory
-					captureDone = True
-				ElseIf (GetTickCount() > timeoutTickCount) Then 
-					' The capture timeout expired before the capture completed
-					' The board may not be triggering, or the capture timeout is too short.
-					MsgBox("Error: Capture timeout after " & captureTimeout_ms & "ms -- verify trigger")
-					Exit Do
-				Else
-					' The capture is in progress
-					If GetInputState <> 0 Then System.Windows.Forms.Application.DoEvents()
-					Sleep(10)
-				End If
-			Loop 
-			
-			' Abort the acquisition and exit if the acquisition did not complete
-			If Not captureDone Then
-				retCode = AlazarAbortCapture(boardHandle)
-				If (retCode <> ApiSuccess) Then
-					MsgBox("Error: AlazarAbortCapture " & AlazarErrorToText(retCode))
-				End If
-				Exit Sub
-			End If
-			
-			' Report time to capture all records to on-board memory
-			captureTime_sec = (GetTickCount() - startTickCount) / 1000
-			If (captureTime_sec > 0) Then
-				recordsPerSec = recordsPerCapture / captureTime_sec
-			Else
-				recordsPerSec = 0
-			End If
-			' TextStatus = TextStatus & "Captured " & recordsPerCapture & " records in " & _
-			''    captureTime_sec & " sec (" & Format(recordsPerSec, "0.00e+") & " records / sec)" & vbCrLf
-			' TextStatus.Refresh
-			
-			' Calculate scale factors to convert sample values to volts:
-			
-			' (a) This 14-bit sample code represents a 0V input
-			'UPGRADE_WARNING: Couldn't resolve default property of object codeZero. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6A50421D-15FE-4896-8A1B-2EC21E9037B2"'
-			codeZero = 2 ^ (bitsPerSample - 1) - 0.5
-			
-			' (b) This is the range of 14-bit sample codes with respect to 0V level
-			codeRange = 2 ^ (bitsPerSample - 1) - 0.5
-			
-			' (c) 14-bit sample codes are stored in the most signficant bits of each 16-bit sample value
-			sampleBitShift = 8 * bytesPerSample - bitsPerSample
-			
-			' (d) Mutiply a 14-bit sample code by this amount to get a 16-bit sample value
-			codeToValue = 2 ^ sampleBitShift
-			
-			' (e) Subtract this amount from a 16-bit sample value to remove the 0V offset
-			'UPGRADE_WARNING: Couldn't resolve default property of object codeZero. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6A50421D-15FE-4896-8A1B-2EC21E9037B2"'
-			offsetValue = codeZero * codeToValue
-			
-			' (f) Multiply a 16-bit sample value by this factor to convert it to volts
-			'UPGRADE_WARNING: Couldn't resolve default property of object scaleValueChA. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6A50421D-15FE-4896-8A1B-2EC21E9037B2"'
-			scaleValueChA = InputRangeIdToVolts(InputRangeIdChA) / (codeRange * codeToValue)
-			scaleValueChB = InputRangeIdToVolts(InputRangeIdChB) / (codeRange * codeToValue)
-			
-			' Transfer records from on-board memory to our buffer, one record at a time
-			' TextStatus = TextStatus & "Transferring " & recordsPerCapture & " records" & vbCrLf
-			' TextStatus.Refresh
-			
-			startTickCount = GetTickCount()
-			bytesTransferred = 0
-			'PictureBox.AutoRedraw = True
-			'Picture1.AutoRedraw = True
-			
-			
-			For record = 0 To recordsPerCapture - 1
-				
-				' Erase the previous record
-				'If DrawData = True Then
-				'PictureBox.Cls
-				'Picture1.Cls
-				'End If
-				
-				For channel = 0 To channelsPerBoard - 1
-					
-					' Get channel Id from channel index
-					channelId = 2 ^ channel
-					
-					' Skip this channel unless it is in channel mask
-					If (channelMask And channelId) <> 0 Then
-						
-						' Erase the contents of the arrWF array
-						ReDim arrWF(1)
-						
-						' Transfer one full record from on-board memory to our buffer
-						retCode = AlazarRead(boardHandle, channelId, buffer(0), bytesPerSample, record + 1, -preTriggerSamples, samplesPerRecord)
-						If (retCode <> ApiSuccess) Then
-							MsgBox("Error: AlazarRead failed -- " & AlazarErrorToText(retCode))
-							Exit Sub
-						End If
-						
-						' TODO: Process record here.
-						'
-						' Samples values are arranged contiguously in the buffer, with
-						' 12-bit sample codes in the most significant bits of each 16-bit
-						' sample value.
-						'
-						' Sample codes are unsigned by default so that:
-						' - a sample code of 0x000 represents a negative full scale input signal;
-						' - a sample code of 0x800 represents a ~0V signal;
-						' - a sample code of 0xFFF represents a positive full scale input signal.
-						
-						
-						
-						' Find name and scale factor of this channel
-						Select Case channelId
-							Case CHANNEL_A
-								channelName = "A"
-								'UPGRADE_WARNING: Couldn't resolve default property of object scaleValueChA. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6A50421D-15FE-4896-8A1B-2EC21E9037B2"'
-								scaleValue = scaleValueChA
-							Case CHANNEL_B
-								channelName = "B"
-								scaleValue = scaleValueChB
-							Case Else
-								MsgBox("Error: Invalid channelId " & channelId)
-								Exit Sub
-						End Select
-						
-						' Delimit the start of this record in the file
-						'                    Print #fileHandle, "--> CH" & channelName & " record " & record + 1 & " begin"
-						'                    Print #fileHandle, ""
-						
-						' Write record samples to file
-						For sampleInRecord = 0 To samplesPerRecord - 1
-							
-							' Get a sample value from the buffer
-							' Note that the digitizer returns 16-bit unsigned sample values
-							' that are stored in a 16-bit signed integer array, so convert
-							' a signed 16-bit value to unsigned.
-							If (buffer(sampleInRecord) < 0) Then
-								sampleValue = buffer(sampleInRecord) + 65536
-							Else
-								sampleValue = buffer(sampleInRecord)
-							End If
-							
-							' Convert the sample value to volts
-							sampleVolts = scaleValue * (sampleValue - offsetValue)
-							
-							' Store new sampleVolts
-							ReDim Preserve arrWF(UBound(arrWF) + 1)
-							arrWF(sampleInRecord) = sampleVolts
-							
-							' Write the sample value in volts to file
-							' Print #33, Str(sampleInRecord) & vbTab & sampleVolts
-							' This is what I think displays units
-							' sampleInRecord runs from 0 to 1023
-							' Sampling rate is 5000000 Hz
-							' To get seconds: sampleInRecord/5000000
-							' Print #33, Str(sampleInRecord / 5000000) & " sec." & vbTab & Format(sampleVolts, "0.0000") & " V"
-							' Print #33, Str(sampleInRecord) & vbTab & Format(sampleVolts, "0.0000")
-							
-							PrintLine(44, Str(sampleInRecord / samplesPerSec) & " sec." & vbTab & VB6.Format(sampleVolts, "0.000000") & " V")
-							
-							
-						Next sampleInRecord
-						
-						'retCode = AlazarGetTriggerTimestamp(boardHandle, record, timestamp_samples)
-						' retCode = AlazarGetTriggerAddress(boardHandle, record, timestamp_address, timestamp_highpart, timestamp_lowpart)
-						'If (retCode <> ApiSuccess) Then
-						'    MsgBox ("Error: AlazarGetTriggerAddress failed -- " & AlazarErrorToText(retCode))
-						'    Exit Sub
-						'End If
-						
-						'trigpos = timestamp_samples
-						'trigpos = timestamp_highpart
-						'trigpos = 128 * 2
-						trigpos = preTriggerSamples
-						
-						xinc = 1# / samplesPerSec ' Length of time for each array element
-						vUnits = CStr(1)
-						hUnits = CStr(1)
-						xIncr = xinc
-						XTrig = trigpos ' time when trigger fired
-						If IsArray(arrWF) Then
-							zzzzzzz = UBound(arrWF) - LBound(arrWF) + 1
-							ToolTip1.SetToolTip(StatusL, "Scope Array Size = " & zzzzzzz)
-							If zzzzzzz > 100000 Then
-								MsgBox("Array too Large  size= " & zzzzzzz,  , "Fix settings on scope")
-							End If
-							IDPoints = UBound(arrWF) - LBound(arrWF) + 1
-						Else
-							MsgBox("Error not array " & channel)
-						End If
-						jj = 0
-						' Print #33, "Ch" & (channel + 1) & " " & xInc & " " & hUnits & " " & XTrig & " " & vUnits
-						For i = LBound(arrWF) To UBound(arrWF)
-							' Print #33, arrWF(i)
-							' xData(channel, jj) = arrWF(i) - xDataRef(channel, jj)
-							'xData(channel, jj) = xData(channel, jj) + arrWF(i)
-							' xData(channel, jj) = arrWF(i)
-							If record = 0 And capture_Renamed = 0 Then
-								xData(channel, jj) = arrWF(i)
-							Else
-								xData(channel, jj) = xData(channel, jj) + arrWF(i)
-							End If
-							jj = jj + 1
-						Next i
-						
-						
-						
-						
-						
-						
-						'                    ' Delimit the end of this record in the file
-						'                    Print #fileHandle, "<-- CH " & channelName & " record " & record + 1 & " end"
-						'                    Print #fileHandle, ""
-						
-						' End If  ' saveData
-						
-						' Draw record on screen
-						'                    If DrawData = True Then
-						'                        Call DrawRecord(buffer, samplesPerRecord, channelId)
-						'                    End If
-						
-						bytesTransferred = bytesTransferred + bytesPerRecord
-						
-					End If ' (channelMask And channelId) <> 0
-					
-				Next channel
-				
-				' PictureBox.AutoRedraw = True
-				' Save picture
-				' SavePicture PictureBox.Image, "C:\Example.bmp"
-				'SavePicture PictureBox.Image, ImagePath & "Run" & Format(iiRun, "000000") & "." & IPrM & "." & iiFile & ".raw.bmp"
-				' Convert from bmp to jpeg
-				' BmpToJpeg "C:\Example" & ".bmp", "C:\Example" & ".jpg", 100
-				'BmpToJpeg ImagePath & "Run" & Format(iiRun, "000000") & "." & IPrM & "." & iiFile & ".raw.bmp", ImagePath & "Run" & Format(iiRun, "000000") & "." & IPrM & "." & iiFile & ".raw.jpg", 100
-				
-				
-				
-				
-				
-				' If the abort button was pressed, then stop reading records
-				
-				If GetInputState <> 0 Then System.Windows.Forms.Application.DoEvents()
-				
-			Next record
-			
-		Next capture_Renamed
-		
-		
-		' Average out the signal samples
-		For channel = 0 To channelsPerBoard - 1
+        Dim jj As Short ' check to be sure returned value is an array
+
+        FileOpen(44, AllTracesFileName, OpenMode.Append)
+        For captureCount = 0 To numberOfCaptures - 1
+
+            If captureCount <> 0 Then
+                PrMParallelID = 0
+                If IPrM = 0 Then PrMParallelID = 32
+                If IPrM = 1 Then PrMParallelID = 1
+                If IPrM = 2 Then PrMParallelID = 2
+                Out(Val("&H378"), PrMParallelID + HVOn + Data7On) 'turn on pulser and HV, no inhibit this time since there is no TPC
+            End If
+
+            ' Update status
+            ' TextStatus = TextStatus & "Capturing " & recordsPerCapture & " records" & vbCrLf
+            ' TextStatus.Refresh
+
+            ' Arm the board to begin the acquisition
+            retCode = AlazarStartCapture(boardHandle)
+            If (retCode <> ApiSuccess) Then
+                MsgBox("Error: AlazarStartCapture failed -- " & AlazarErrorToText(retCode))
+                Exit Sub
+            End If
+
+            ' Wait for the board to capture all records to on-board memory
+            startTickCount = GetTickCount()
+            timeoutTickCount = startTickCount + captureTimeout_ms
+            captureDone = False
+
+            Do While Not captureDone
+                If AlazarBusy(boardHandle) = 0 Then
+                    ' All records have been captured to on-board memory
+                    captureDone = True
+                ElseIf (GetTickCount() > timeoutTickCount) Then
+                    ' The capture timeout expired before the capture completed
+                    ' The board may not be triggering, or the capture timeout is too short.
+                    MsgBox("Error: Capture timeout for signal after " & captureTimeout_ms & "ms -- verify trigger")
+                    Exit Do
+                Else
+                    ' The capture is in progress
+                    If GetInputState <> 0 Then System.Windows.Forms.Application.DoEvents()
+                    Sleep(10)
+                End If
+            Loop
+
+            ' Abort the acquisition and exit if the acquisition did not complete
+            If Not captureDone Then
+                retCode = AlazarAbortCapture(boardHandle)
+                If (retCode <> ApiSuccess) Then
+                    MsgBox("Error: AlazarAbortCapture " & AlazarErrorToText(retCode))
+                End If
+                Exit Sub
+            End If
+
+            ' Report time to capture all records to on-board memory
+            captureTime_sec = (GetTickCount() - startTickCount) / 1000
+            If (captureTime_sec > 0) Then
+                recordsPerSec = recordsPerCapture / captureTime_sec
+            Else
+                recordsPerSec = 0
+            End If
+            ' TextStatus = TextStatus & "Captured " & recordsPerCapture & " records in " & _
+            ''    captureTime_sec & " sec (" & Format(recordsPerSec, "0.00e+") & " records / sec)" & vbCrLf
+            ' TextStatus.Refresh
+
+            ' Calculate scale factors to convert sample values to volts:
+
+            ' (a) This 14-bit sample code represents a 0V input
+            'UPGRADE_WARNING: Couldn't resolve default property of object codeZero. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6A50421D-15FE-4896-8A1B-2EC21E9037B2"'
+            codeZero = 2 ^ (bitsPerSample - 1) - 0.5
+
+            ' (b) This is the range of 14-bit sample codes with respect to 0V level
+            codeRange = 2 ^ (bitsPerSample - 1) - 0.5
+
+            ' (c) 14-bit sample codes are stored in the most signficant bits of each 16-bit sample value
+            sampleBitShift = 8 * bytesPerSample - bitsPerSample
+
+            ' (d) Mutiply a 14-bit sample code by this amount to get a 16-bit sample value
+            codeToValue = 2 ^ sampleBitShift
+
+            ' (e) Subtract this amount from a 16-bit sample value to remove the 0V offset
+            'UPGRADE_WARNING: Couldn't resolve default property of object codeZero. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6A50421D-15FE-4896-8A1B-2EC21E9037B2"'
+            offsetValue = codeZero * codeToValue
+
+            ' (f) Multiply a 16-bit sample value by this factor to convert it to volts
+            'UPGRADE_WARNING: Couldn't resolve default property of object scaleValueChA. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6A50421D-15FE-4896-8A1B-2EC21E9037B2"'
+            scaleValueChA = InputRangeIdToVolts(InputRangeIdChA) / (codeRange * codeToValue)
+            scaleValueChB = InputRangeIdToVolts(InputRangeIdChB) / (codeRange * codeToValue)
+
+            ' Transfer records from on-board memory to our buffer, one record at a time
+            ' TextStatus = TextStatus & "Transferring " & recordsPerCapture & " records" & vbCrLf
+            ' TextStatus.Refresh
+
+            startTickCount = GetTickCount()
+            bytesTransferred = 0
+            'PictureBox.AutoRedraw = True
+            'Picture1.AutoRedraw = True
+
+
+            For record = 0 To recordsPerCapture - 1
+
+                ' Erase the previous record
+                'If DrawData = True Then
+                'PictureBox.Cls
+                'Picture1.Cls
+                'End If
+
+                For channel = 0 To channelsPerBoard - 1
+
+                    ' Get channel Id from channel index
+                    channelId = 2 ^ channel
+
+                    ' Skip this channel unless it is in channel mask
+                    If (channelMask And channelId) <> 0 Then
+
+                        ' Erase the contents of the arrWF array
+                        ReDim arrWF(1)
+
+                        ' Transfer one full record from on-board memory to our buffer
+                        retCode = AlazarRead(boardHandle, channelId, buffer(0), bytesPerSample, record + 1, -preTriggerSamples, samplesPerRecord)
+                        If (retCode <> ApiSuccess) Then
+                            MsgBox("Error: AlazarRead failed -- " & AlazarErrorToText(retCode))
+                            Exit Sub
+                        End If
+
+                        ' TODO: Process record here.
+                        '
+                        ' Samples values are arranged contiguously in the buffer, with
+                        ' 12-bit sample codes in the most significant bits of each 16-bit
+                        ' sample value.
+                        '
+                        ' Sample codes are unsigned by default so that:
+                        ' - a sample code of 0x000 represents a negative full scale input signal;
+                        ' - a sample code of 0x800 represents a ~0V signal;
+                        ' - a sample code of 0xFFF represents a positive full scale input signal.
+
+
+
+                        ' Find name and scale factor of this channel
+                        Select Case channelId
+                            Case CHANNEL_A
+                                channelName = "A"
+                                'UPGRADE_WARNING: Couldn't resolve default property of object scaleValueChA. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6A50421D-15FE-4896-8A1B-2EC21E9037B2"'
+                                scaleValue = scaleValueChA
+                            Case CHANNEL_B
+                                channelName = "B"
+                                scaleValue = scaleValueChB
+                            Case Else
+                                MsgBox("Error: Invalid channelId " & channelId)
+                                Exit Sub
+                        End Select
+
+                        ' Delimit the start of this record in the file
+                        '                    Print #fileHandle, "--> CH" & channelName & " record " & record + 1 & " begin"
+                        '                    Print #fileHandle, ""
+
+                        ' Write record samples to file
+                        For sampleInRecord = 0 To samplesPerRecord - 1
+
+                            ' Get a sample value from the buffer
+                            ' Note that the digitizer returns 16-bit unsigned sample values
+                            ' that are stored in a 16-bit signed integer array, so convert
+                            ' a signed 16-bit value to unsigned.
+                            If (buffer(sampleInRecord) < 0) Then
+                                sampleValue = buffer(sampleInRecord) + 65536
+                            Else
+                                sampleValue = buffer(sampleInRecord)
+                            End If
+
+                            ' Convert the sample value to volts
+                            sampleVolts = scaleValue * (sampleValue - offsetValue)
+
+                            ' Store new sampleVolts
+                            ReDim Preserve arrWF(UBound(arrWF) + 1)
+                            arrWF(sampleInRecord) = sampleVolts
+
+                            ' Write the sample value in volts to file
+                            ' Print #33, Str(sampleInRecord) & vbTab & sampleVolts
+                            ' This is what I think displays units
+                            ' sampleInRecord runs from 0 to 1023
+                            ' Sampling rate is 5000000 Hz
+                            ' To get seconds: sampleInRecord/5000000
+                            ' Print #33, Str(sampleInRecord / 5000000) & " sec." & vbTab & Format(sampleVolts, "0.0000") & " V"
+                            ' Print #33, Str(sampleInRecord) & vbTab & Format(sampleVolts, "0.0000")
+
+                            PrintLine(44, Str(sampleInRecord / samplesPerSec) & " sec." & vbTab & VB6.Format(sampleVolts, "0.000000") & " V")
+
+
+                        Next sampleInRecord
+
+                        'retCode = AlazarGetTriggerTimestamp(boardHandle, record, timestamp_samples)
+                        ' retCode = AlazarGetTriggerAddress(boardHandle, record, timestamp_address, timestamp_highpart, timestamp_lowpart)
+                        'If (retCode <> ApiSuccess) Then
+                        '    MsgBox ("Error: AlazarGetTriggerAddress failed -- " & AlazarErrorToText(retCode))
+                        '    Exit Sub
+                        'End If
+
+                        'trigpos = timestamp_samples
+                        'trigpos = timestamp_highpart
+                        'trigpos = 128 * 2
+                        trigpos = preTriggerSamples
+
+                        xinc = 1.0# / samplesPerSec ' Length of time for each array element
+                        vUnits = CStr(1)
+                        hUnits = CStr(1)
+                        xIncr = xinc
+                        XTrig = trigpos ' time when trigger fired
+                        If IsArray(arrWF) Then
+                            zzzzzzz = UBound(arrWF) - LBound(arrWF) + 1
+                            ToolTip1.SetToolTip(StatusL, "Scope Array Size = " & zzzzzzz)
+                            If zzzzzzz > 100000 Then
+                                MsgBox("Array too Large  size= " & zzzzzzz,  , "Fix settings on scope")
+                            End If
+                            IDPoints = UBound(arrWF) - LBound(arrWF) + 1
+                        Else
+                            MsgBox("Error not array " & channel)
+                        End If
+                        jj = 0
+                        ' Print #33, "Ch" & (channel + 1) & " " & xInc & " " & hUnits & " " & XTrig & " " & vUnits
+                        For i = LBound(arrWF) To UBound(arrWF)
+                            ' Print #33, arrWF(i)
+                            ' xData(channel, jj) = arrWF(i) - xDataRef(channel, jj)
+                            'xData(channel, jj) = xData(channel, jj) + arrWF(i)
+                            ' xData(channel, jj) = arrWF(i)
+                            If record = 0 And capture_Renamed = 0 Then
+                                xData(channel, jj) = arrWF(i)
+                            Else
+                                xData(channel, jj) = xData(channel, jj) + arrWF(i)
+                            End If
+                            jj = jj + 1
+                        Next i
+
+
+
+
+
+
+                        '                    ' Delimit the end of this record in the file
+                        '                    Print #fileHandle, "<-- CH " & channelName & " record " & record + 1 & " end"
+                        '                    Print #fileHandle, ""
+
+                        ' End If  ' saveData
+
+                        ' Draw record on screen
+                        '                    If DrawData = True Then
+                        '                        Call DrawRecord(buffer, samplesPerRecord, channelId)
+                        '                    End If
+
+                        bytesTransferred = bytesTransferred + bytesPerRecord
+
+                    End If ' (channelMask And channelId) <> 0
+
+                Next channel
+
+                ' PictureBox.AutoRedraw = True
+                ' Save picture
+                ' SavePicture PictureBox.Image, "C:\Example.bmp"
+                'SavePicture PictureBox.Image, ImagePath & "Run" & Format(iiRun, "000000") & "." & IPrM & "." & iiFile & ".raw.bmp"
+                ' Convert from bmp to jpeg
+                ' BmpToJpeg "C:\Example" & ".bmp", "C:\Example" & ".jpg", 100
+                'BmpToJpeg ImagePath & "Run" & Format(iiRun, "000000") & "." & IPrM & "." & iiFile & ".raw.bmp", ImagePath & "Run" & Format(iiRun, "000000") & "." & IPrM & "." & iiFile & ".raw.jpg", 100
+
+
+
+
+
+                ' If the abort button was pressed, then stop reading records
+
+                If GetInputState <> 0 Then System.Windows.Forms.Application.DoEvents()
+
+            Next record
+
+        Next captureCount
+        FileClose(44)
+
+        ' Average out the signal samples
+        FileOpen(33, DataFileName, OpenMode.Append)
+        For channel = 0 To channelsPerBoard - 1
 			' For i = LBound(xData, 2) To UBound(xData, 2)
 			For i = 0 To preTriggerSamples + postTriggerSamples - 1
 				xData(channel, i) = xData(channel, i) / (recordsPerCapture * numberOfCaptures)
@@ -1028,21 +1021,19 @@ cmdGetWFMErr:
 				' xData(channel, i) = xData(channel, i) - xDataRef(channel, i)
 			Next i
 		Next channel
-		
-		
-		' Close the data file
-		'If (saveData) Then
-		'    Close #fileHandle
-		'End If
-		
-		
-		
-		
-		
-		
-		' FileCopy DataFileName, ImagePath & "Run_" & Format(iiRun, "000000") & ".txt"
-		' Display results
-		transferTime_sec = (GetTickCount() - startTickCount) / 1000
+        FileClose(33)
+
+
+
+
+
+
+
+
+
+        ' FileCopy DataFileName, ImagePath & "Run_" & Format(iiRun, "000000") & ".txt"
+        ' Display results
+        transferTime_sec = (GetTickCount() - startTickCount) / 1000
 		If (transferTime_sec > 0) Then
 			bytesPerSec = bytesTransferred / transferTime_sec
 		Else
@@ -1118,15 +1109,16 @@ cmdGetWFMErr:
 				xData(i + 4, ii) = xsum / ISmooth
 			Next ii
 		Next i
-		
-		
-		
-		'    Call DrawAveragedSmoothedRecord(xData, preTriggerSamples + postTriggerSamples, channelsPerBoard)
-		
-		
-		
-		' Print out the noise samples, smoothed
-		For channel = 0 To channelsPerBoard - 1
+
+
+
+        '    Call DrawAveragedSmoothedRecord(xData, preTriggerSamples + postTriggerSamples, channelsPerBoard)
+
+        ' Open file for writing data to disk
+        FileOpen(33, DataFileName, OpenMode.Append)
+
+        ' Print out the noise samples, smoothed
+        For channel = 0 To channelsPerBoard - 1
 			' For i = LBound(xData, 2) To UBound(xData, 2)
 			For i = 0 To preTriggerSamples + postTriggerSamples - 1
 				PrintLine(33, Str(i / samplesPerSec) & " sec." & vbTab & VB6.Format(xDataRef(channel + 4, i), "0.000000") & " V")
@@ -1142,31 +1134,34 @@ cmdGetWFMErr:
 				' xData(channel, i) = xData(channel, i) - xDataRef(channel, i)
 			Next i
 		Next channel
-		
-		
-		' Close the data file
-		If (saveData) Then
+
+
+        FileClose(33)
+
+
+
+        ' Close the data file
+        If (saveData) Then
 			FileClose(fileHandle)
 		End If
-		
-		FileClose(44)
-		FileClose(33)
-		FileCopy(DataFileName, ImagePath & "Run_" & VB6.Format(iiRun, "000000") & ".txt")
+
+
+        FileCopy(DataFileName, ImagePath & "Run_" & VB6.Format(iiRun, "000000") & ".txt")
 		
 		
 		
 		Call Anal_Data()
-		
-		
-		
-		If PassCnt = 3 Then Out(Val("&H378"), 8 + Data7On) 'turn off pulser
-		
-		Exit Sub
-		'rudimentary error trapping
-cmdGetWFMErr1: 
-		'If PassCnt = ISets Then Out Val("&H37a"), 0 'turn off pulser
-		If PassCnt = ISets Then Out(Val("&H378"), 8 + Data7On) 'turn off pulser
-		FileClose(33)
+
+        captureCount = 0
+
+        Out(Val("&H378"), 8 + Data7On) 'turn off pulser
+
+        Exit Sub
+        'rudimentary error trapping
+cmdGetWFMErr1:
+
+        Out(Val("&H378"), 8 + Data7On) 'turn off pulser
+        FileClose(33)
 		MsgBox("Error: " & Err.Number & ", " & Err.Description)
 		
 	End Sub
@@ -1182,27 +1177,9 @@ cmdGetWFMErr1:
 		RMSCut = Val(Text3.Text)
 		If RMSCut < 3 Then RMSCut = 3#
 	End Sub
-	
-	'UPGRADE_WARNING: Event Text4.TextChanged may fire when form is initialized. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="88B12AE1-6DE0-48A0-86F1-60C0686C026A"'
-	Private Sub Text4_TextChanged(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles Text4.TextChanged
-		Static ilocal As Short
-		If ilocal = 1 Then Exit Sub
-		ISets = Val(Text4.Text)
-		If ISets > 5 Then
-			ISets = 5
-			ilocal = 1
-			Text4.Text = CStr(ISets)
-		End If
-		If ISets < 1 Then
-			ISets = 1
-			ilocal = 1
-			Text4.Text = CStr(ISets)
-		End If
-		ilocal = 0
-		
-	End Sub
-	
-	Private Sub HVWait_Tick(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles HVWait.Tick
+
+
+    Private Sub HVWait_Tick(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles HVWait.Tick
 		' Function accumulates noise for later correction
 		
 		HVWait.Enabled = False
@@ -1271,18 +1248,14 @@ cmdGetWFMErr1:
 		Dim i As Integer ' counter variable
 		Dim hUnits, vUnits As String ' variables for returning unit types
 		Dim samplesPerSec As Double
-		
-		FileClose(33)
-		FileOpen(33, DataFileName, OpenMode.Append)
-		PrintLine(33, Today & "  " & TimeOfDay & "  Pass = " & PassCnt)
-		
-		FileClose(44)
-		FileOpen(44, AllTracesFileName, OpenMode.Append)
-		PrintLine(44, Today & "  " & TimeOfDay & "  Pass = " & PassCnt)
-		
-		
-		' Set the default return code to indicate failure
-		Dim AcquireData As Boolean
+
+
+
+
+
+
+        ' Set the default return code to indicate failure
+        Dim AcquireData As Boolean
 		AcquireData = False
 		
 		Dim DrawData As Boolean
@@ -1298,17 +1271,17 @@ cmdGetWFMErr1:
 		
 		' TODO: Select the number of post-trigger samples per record
 		postTriggerSamples = 4508
-		
-		' TODO: Select the number of records in the acquisition
-		' Ben: we would eventually like to average over 10 captures
-		recordsPerCapture = 25
-		
-		' TODO: Select the amount of time, in milliseconds, to wait for the
-		' acquisiton to complete to on-board memory
-		captureTimeout_ms = 100000
-		
-		' TODO: Select which channels read from on-board memory (A, B, or both)
-		channelMask = CHANNEL_A Or CHANNEL_B
+
+        ' TODO: Select the number of records in the acquisition
+        ' Ben: we would eventually like to average over 10 captures
+        recordsPerCapture = 1
+
+        ' TODO: Select the amount of time, in milliseconds, to wait for the
+        ' acquisiton to complete to on-board memory
+        captureTimeout_ms = 100000
+
+        ' TODO: Select which channels read from on-board memory (A, B, or both)
+        channelMask = CHANNEL_A Or CHANNEL_B
 		
 		' Select clock parameters as required
 		' 0, 2, 3 want 1 MSPS
@@ -1393,11 +1366,11 @@ cmdGetWFMErr1:
 			If AlazarBusy(boardHandle) = 0 Then
 				' All records have been captured to on-board memory
 				captureDone = True
-			ElseIf (GetTickCount() > timeoutTickCount) Then 
-				' The capture timeout expired before the capture completed
-				' The board may not be triggering, or the capture timeout is too short.
-				MsgBox("Error: Capture timeout after " & captureTimeout_ms & "ms -- verify trigger")
-				Exit Do
+			ElseIf (GetTickCount() > timeoutTickCount) Then
+                ' The capture timeout expired before the capture completed
+                ' The board may not be triggering, or the capture timeout is too short.
+                MsgBox("Error: Capture timeout for noise data after " & captureTimeout_ms & "ms -- verify trigger")
+                Exit Do
 			Else
 				' The capture is in progress
 				If GetInputState <> 0 Then System.Windows.Forms.Application.DoEvents()
@@ -1463,8 +1436,13 @@ cmdGetWFMErr1:
 		Dim sampleValue As Integer
 		Dim sampleVolts As Double
 		Dim zzzzzzz As Short
-		Dim jj As Short ' check to be sure returned value is an array
-		For record = 0 To recordsPerCapture - 1
+        Dim jj As Short ' check to be sure returned value is an array
+
+        FileClose(44)
+        FileOpen(44, AllTracesFileName, OpenMode.Append)
+        PrintLine(44, Today & "  " & TimeOfDay)
+
+        For record = 0 To recordsPerCapture - 1
 			
 			' Erase the previous record
 			'        If DrawData = True Then
@@ -1616,34 +1594,30 @@ cmdGetWFMErr1:
 			If GetInputState <> 0 Then System.Windows.Forms.Application.DoEvents()
 			
 		Next record
-		
-		
-		
-		
-		
-		' Average out the noise samples
-		'Dim ii As Integer
-		'Dim kk As Integer
-		'For ii = LBound(xDataRef, 1) To UBound(xDataRef, 1)
-		'    For kk = LBound(xDataRef, 2) To UBound(xDataRef, 2)
-		'       xDataRef(ii, kk) = xDataRef(ii, kk) / recordsPerCapture
-		'       Next kk
-		'    End
-		'    Next ii
-		'End
-		
-		'For channel = LBound(xDataRef, 1) To UBound(xDataRef, 1)
-		For channel = 0 To channelsPerBoard - 1
-			For i = 0 To preTriggerSamples + postTriggerSamples - 1
-				'For i = LBound(xDataRef, 2) To UBound(xDataRef, 2)
-				xDataRef(channel, i) = xDataRef(channel, i) / recordsPerCapture
-				PrintLine(33, Str(i / samplesPerSec) & " sec." & vbTab & VB6.Format(xDataRef(channel, i), "0.000000") & " V")
-			Next i
-		Next channel
-		
-		
-		' Smooth out the noise samples
-		Dim xsumref As Double
+
+
+        FileClose(44)
+
+
+
+
+        FileClose(33)
+        FileOpen(33, DataFileName, OpenMode.Append)
+        PrintLine(33, Today & "  " & TimeOfDay)
+
+        'For channel = LBound(xDataRef, 1) To UBound(xDataRef, 1)
+        For channel = 0 To channelsPerBoard - 1
+            For i = 0 To preTriggerSamples + postTriggerSamples - 1
+                'For i = LBound(xDataRef, 2) To UBound(xDataRef, 2)
+                xDataRef(channel, i) = xDataRef(channel, i) / recordsPerCapture
+                PrintLine(33, Str(i / samplesPerSec) & " sec." & vbTab & VB6.Format(xDataRef(channel, i), "0.000000") & " V")
+            Next i
+        Next channel
+
+        FileClose(33)
+
+        ' Smooth out the noise samples
+        Dim xsumref As Double
 		Dim ii As Short
 		For i = 0 To 1 'now create smoothed data
 			xsumref = 0
@@ -1666,18 +1640,16 @@ cmdGetWFMErr1:
 				xDataRef(i + 4, ii) = xsumref / ISmooth
 			Next ii
 		Next i
-		
-		
-		'    Call DrawAveragedSmoothedRecord(xDataRef, preTriggerSamples + postTriggerSamples, channelsPerBoard)
-		
-		
-		
-		FileClose(33)
-		
-		FileClose(44)
-		
-		
-		Dim PrMParallelID As Short
+
+
+        '    Call DrawAveragedSmoothedRecord(xDataRef, preTriggerSamples + postTriggerSamples, channelsPerBoard)
+
+
+
+
+
+
+        Dim PrMParallelID As Short
 		PrMParallelID = 0
 		If IPrM = 0 Then PrMParallelID = 32
 		If IPrM = 1 Then PrMParallelID = 1
@@ -1717,9 +1689,9 @@ cmdGetWFMErr1:
 		DataFileName = DataFilePath & "Run_" & VB6.Format(iiRun, "000000") & "_" & VB6.Format(IPrM, "00") & ".txt"
 		AllTracesFileName = AllTracesPath & "Run_" & VB6.Format(iiRun, "000000") & "_" & VB6.Format(IPrM, "00") & ".txt"
 		RunFileL.Text = DataFileName
-		
-        PulserWait.Interval = 30000
-		PulserWait.Enabled = True
+
+        PulserWait.Interval = 10000
+        PulserWait.Enabled = True
 		
 		List3.Items.Add("Configuring board")
 		
@@ -1745,36 +1717,33 @@ cmdGetWFMErr1:
 		End If
 		
 		List3.Items.Add("Board configured")
-		
-		
-		
-		' HVOnStall.Enabled = True
-		
-		' Tells parallel port to turn off HV and any running flash lamps
-		' 32 = 2^5, activates veto for TCP for bit D5
-		' Out Val("&H378"), 8 + Data7On + 32 'turn on pulser
-		
-		' Sleep 10000
-		
-		' Tells parallel port to turn on the flash lamp for each PM
-		' 32 = 2^5, activates veto for TCP for bit D5
-		' Out Val("&H378"), IPrM + Data7On + 32 'turn on pulser
-		
-		' Dim IsInline As Integer
-		' IsInline = 0
-		' If IPrM = 0 Then IsInline = 32
-		Dim PrMParallelID As Short
+
+
+
+        ' HVOnStall.Enabled = True
+
+        ' Tells parallel port to turn off HV and any running flash lamps
+        ' 32 = 2^5, activates veto for TCP for bit D5
+        ' Out Val("&H378"), 8 + Data7On + 32 'turn on pulser
+
+        ' Sleep 10000
+
+        ' Tells parallel port to turn on the flash lamp for each PM
+        ' 32 = 2^5, activates veto for TCP for bit D5
+        ' Out Val("&H378"), IPrM + Data7On + 32 'turn on pulser
+
+        Dim PrMParallelID As Short
 		PrMParallelID = 0
 		If IPrM = 0 Then PrMParallelID = 32
 		If IPrM = 1 Then PrMParallelID = 1
 		If IPrM = 2 Then PrMParallelID = 2
 		Out(Val("&H378"), PrMParallelID + Data7On) 'turn on pulser, no longer need to worry about TPC veto
-		
-		StatusL.Text = "Pulser Turned ON, PrM = " & IPrM & " Pass = " & PassCnt
-		'    PassCnt = 0
-		
-		HVWait.Interval = 10000
-		HVWait.Enabled = True
+
+        StatusL.Text = "Pulser Turned ON, PrM = " & IPrM
+        '    PassCnt = 0
+
+        HVWait.Interval = 2000
+        HVWait.Enabled = True
 		
 		
 	End Sub

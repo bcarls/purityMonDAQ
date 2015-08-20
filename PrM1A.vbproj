@@ -34,7 +34,7 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>4</ApplicationRevision>
+    <ApplicationRevision>14</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -346,6 +346,11 @@
     <Compile Include="ATSApiVB.vb">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="My Project\Resources.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="MyList.vb" />
     <Compile Include="PrM.vb">
       <SubType>Code</SubType>
@@ -357,6 +362,11 @@
     <Compile Include="PrMF.vb">
       <SubType>Form</SubType>
     </Compile>
+    <EmbeddedResource Include="My Project\Resources.resx">
+      <CustomToolNamespace>My.Resources</CustomToolNamespace>
+      <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.vb</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="PrMF.resX">
       <DependentUpon>PrMF.vb</DependentUpon>
     </EmbeddedResource>
@@ -366,7 +376,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="My Project\" />
+    <None Include="My Project\FNAL-Logo-NAL-Blue.png" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">

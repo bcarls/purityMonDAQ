@@ -26,14 +26,16 @@ Module PrM
 	Public IAtom As Short
 	Public xIncr As Double
 	Public XTrig As Integer
-	Public PassCnt, LiquidWait, iRunning As Short
-	Public xData(7, 100000) As Single '0-3 are raw, 4-7 are smoothed
+    Public LiquidWait, iRunning As Short
+    Public numberOfCaptures As Integer
+    Public captureCount As Integer
+    Public xData(7, 100000) As Single '0-3 are raw, 4-7 are smoothed
 	Public xDataRef(7, 100000) As Single
 	Public IDPoints, ISmooth, IOk As Short
 	Public Ichan2, Ichan1, Ichan3 As Short
 	Public RMSCut As Single
-	Public OneTrueLiquid, ISets As Short
-	Public KeyHit, KeyTimer As Short
+    Public OneTrueLiquid As Short
+    Public KeyHit, KeyTimer As Short
 	Public LogPath, DataFileNameHist As String
 	Public AllTracesPath, AllTracesFileName As String
 	Public ImagePath As String
@@ -79,13 +81,13 @@ Module PrM
 		FileOpen(77, DataFilePath & "CondensedData.txt", OpenMode.Append)
 		PrMF.List1.Items.Clear()
 		PrMF.List2.Items.Clear()
-		PrintLine(7, Today & " " & TimeOfDay & "," & iiRun & "," & IPrM & "," & PassCnt)
-		Print(77, Today & " " & TimeOfDay & "," & iiRun & ",", TAB)
+        PrintLine(7, Today & " " & TimeOfDay & "," & iiRun & "," & IPrM)
+        Print(77, Today & " " & TimeOfDay & "," & iiRun & ",", TAB)
 		PrMF.List1.Items.Add(Today & " " & TimeOfDay)
-		PrMF.List1.Items.Add(" Run = " & iiRun & " Pass = " & PassCnt & " PrM = " & IPrM)
-		
-		
-		Dim secPerSample As Double
+        PrMF.List1.Items.Add(" Run = " & iiRun & " PrM = " & IPrM)
+
+
+        Dim secPerSample As Double
 		If IPrM = 1 Or IPrM = 2 Then
 			secPerSample = 1 / 1000000#
 		Else
@@ -262,9 +264,13 @@ Module PrM
 			PrintLine(7, "UBOONE.PRM_IMPURITIES_0" & IPrM & ".F_CV," & Today & " " & zztime & "," & VB6.Format(999999, "0.000e-00"))
 		End If
 		FileClose(7)
-		
-        FileCopy(LogPath & "Run" & VB6.Format(iiRun, "000000") & "." & IPrM & "." & iiFile & ".LogData.csv", "Y:\" & "Run" & VB6.Format(iiRun, "000000") & "." & IPrM & "." & iiFile & ".LogData.csv")
 
+
+
+
+        If PrMF.CheckBoxiFix.CheckState = 1 Then
+            FileCopy(LogPath & "Run" & VB6.Format(iiRun, "000000") & "." & IPrM & "." & iiFile & ".LogData.csv", "Y:\" & "Run" & VB6.Format(iiRun, "000000") & "." & IPrM & "." & iiFile & ".LogData.csv")
+        End If
 
 
 
@@ -316,10 +322,9 @@ Module PrM
 			PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 1 & "_" & 0 & "/CATHFACTOR," & CathF & vbCrLf)
 			PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 1 & "_" & 0 & "/CATHPEAK," & fCatPeak & vbCrLf)
 			PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 1 & "_" & 0 & "/CATHTIME," & fCatTime & vbCrLf)
-			PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 1 & "_" & 0 & "/CATHTRUE," & fCatTrue & vbCrLf)
-			PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 1 & "_" & 0 & "/CATHTRUE," & fCatTrue & vbCrLf)
-			'UPGRADE_WARNING: DateDiff behavior may be different. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6B38EC3F-686D-4B2E-B5A5-9E8E7A762E32"'
-			PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 1 & "_" & 0 & "/UNIXTIME," & DateDiff(Microsoft.VisualBasic.DateInterval.Second, DateSerial(1970, 1, 1), sysDateTime) & vbCrLf)
+            PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 1 & "_" & 0 & "/CATHTRUE," & fCatTrue & vbCrLf)
+            'UPGRADE_WARNING: DateDiff behavior may be different. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6B38EC3F-686D-4B2E-B5A5-9E8E7A762E32"'
+            PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 1 & "_" & 0 & "/UNIXTIME," & DateDiff(Microsoft.VisualBasic.DateInterval.Second, DateSerial(1970, 1, 1), sysDateTime) & vbCrLf)
 		End If
 		
 		' Send data for IPrM = 1
@@ -341,10 +346,9 @@ Module PrM
 			PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 2 & "_" & 1 & "/CATHFACTOR," & CathF & vbCrLf)
 			PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 2 & "_" & 1 & "/CATHPEAK," & fCatPeak & vbCrLf)
 			PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 2 & "_" & 1 & "/CATHTIME," & fCatTime & vbCrLf)
-			PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 2 & "_" & 1 & "/CATHTRUE," & fCatTrue & vbCrLf)
-			PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 2 & "_" & 1 & "/CATHTRUE," & fCatTrue & vbCrLf)
-			'UPGRADE_WARNING: DateDiff behavior may be different. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6B38EC3F-686D-4B2E-B5A5-9E8E7A762E32"'
-			PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 2 & "_" & 1 & "/UNIXTIME," & DateDiff(Microsoft.VisualBasic.DateInterval.Second, DateSerial(1970, 1, 1), sysDateTime) & vbCrLf)
+            PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 2 & "_" & 1 & "/CATHTRUE," & fCatTrue & vbCrLf)
+            'UPGRADE_WARNING: DateDiff behavior may be different. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6B38EC3F-686D-4B2E-B5A5-9E8E7A762E32"'
+            PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 2 & "_" & 1 & "/UNIXTIME," & DateDiff(Microsoft.VisualBasic.DateInterval.Second, DateSerial(1970, 1, 1), sysDateTime) & vbCrLf)
 		End If
 		
 		
@@ -368,10 +372,9 @@ Module PrM
 			PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 3 & "_" & 2 & "/CATHFACTOR," & CathF & vbCrLf)
 			PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 3 & "_" & 2 & "/CATHPEAK," & fCatPeak & vbCrLf)
 			PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 3 & "_" & 2 & "/CATHTIME," & fCatTime & vbCrLf)
-			PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 3 & "_" & 2 & "/CATHTRUE," & fCatTrue & vbCrLf)
-			PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 3 & "_" & 2 & "/CATHTRUE," & fCatTrue & vbCrLf)
-			'UPGRADE_WARNING: DateDiff behavior may be different. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6B38EC3F-686D-4B2E-B5A5-9E8E7A762E32"'
-			PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 3 & "_" & 2 & "/UNIXTIME," & DateDiff(Microsoft.VisualBasic.DateInterval.Second, DateSerial(1970, 1, 1), sysDateTime) & vbCrLf)
+            PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 3 & "_" & 2 & "/CATHTRUE," & fCatTrue & vbCrLf)
+            'UPGRADE_WARNING: DateDiff behavior may be different. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6B38EC3F-686D-4B2E-B5A5-9E8E7A762E32"'
+            PrMF.Winsock1.SendData("uB_ArPurity_PM0" & 3 & "_" & 2 & "/UNIXTIME," & DateDiff(Microsoft.VisualBasic.DateInterval.Second, DateSerial(1970, 1, 1), sysDateTime) & vbCrLf)
 		End If
 		
 		
