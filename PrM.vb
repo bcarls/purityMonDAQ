@@ -17,29 +17,31 @@ Module PrM
 	Public Declare Sub Out Lib "inpout32.dll"  Alias "Out32"(ByVal PortAddress As Short, ByVal value As Short)
 	'UPGRADE_WARNING: Structure SYSTEMTIME may require marshalling attributes to be passed as an argument in this Declare statement. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="C429C3A5-5D47-4CD9-8F51-74A1616405DC"'
 	Declare Sub GetSystemTime Lib "kernel32.dll" (ByRef lpSystemTime As SYSTEMTIME)
-	
-	
-	Public iiRun, IRate, iiFile As Integer
-	Public xPath As String
-	Public DataFilePath, DataFileName As String
-	Public xRate As Integer
+
+
+    Public iiRun, IRate, iiFile As Integer
+    Public DataPrefFilePath, DataFileName As String
+    Public xRate As Integer
 	Public IAtom As Short
 	Public xIncr As Double
 	Public XTrig As Integer
     Public LiquidWait, iRunning As Short
-    Public numberOfCaptures As Integer
-    Public captureCount As Integer
-    Public xData(7, 100000) As Single '0-3 are raw, 4-7 are smoothed
-	Public xDataRef(7, 100000) As Single
-	Public IDPoints, ISmooth, IOk As Short
+    Public numberOfCapturesSignal As Integer
+    Public recordsPerCaptureSignal As Integer
+    Public recordsPerCaptureNoise As Integer
+    Public captureCountSignal As Integer
+    Public SignalData(7, 100000) As Single '0-3 are raw, 4-7 are smoothed
+    Public NoiseData(7, 100000) As Single
+    Public SignalDataSmoothed(7, 100000) As Single '0-3 are raw, 4-7 are smoothed
+    Public NoiseDataSmoothed(7, 100000) As Single
+    Public IDPoints, ISmooth, IOk As Short
 	Public Ichan2, Ichan1, Ichan3 As Short
 	Public RMSCut As Single
     Public OneTrueLiquid As Short
     Public KeyHit, KeyTimer As Short
 	Public LogPath, DataFileNameHist As String
-	Public AllTracesPath, AllTracesFileName As String
-	Public ImagePath As String
-	Public isubtrch1 As Short
+    Public AllTracesPath, AllTracesFileNameNoise, AllTracesFileNameSignal As String
+    Public isubtrch1 As Short
 	Public IPrM, NPrM As Short
 	
 	
@@ -77,9 +79,9 @@ Module PrM
 		
 		On Error GoTo 0
 		On Error Resume Next
-		FileOpen(7, DataFilePath & "AnalyzedData.txt", OpenMode.Append)
-		FileOpen(77, DataFilePath & "CondensedData.txt", OpenMode.Append)
-		PrMF.List1.Items.Clear()
+        FileOpen(7, DataPrefFilePath & "AnalyzedData.txt", OpenMode.Append)
+        FileOpen(77, DataPrefFilePath & "CondensedData.txt", OpenMode.Append)
+        PrMF.List1.Items.Clear()
 		PrMF.List2.Items.Clear()
         PrintLine(7, Today & " " & TimeOfDay & "," & iiRun & "," & IPrM)
         Print(77, Today & " " & TimeOfDay & "," & iiRun & ",", TAB)
@@ -98,24 +100,24 @@ Module PrM
 		' Start with cathode
 		Dim i As Short
 		For i = 0 To 1000
-			If xData(Ichan2, i) < fCatPeak Then
-				fCatPeak = xData(Ichan2, i)
-				CatTimeIndex = i
-			End If
-		Next i
+            If SignalDataSmoothed(Ichan2, i) < fCatPeak Then
+                fCatPeak = SignalDataSmoothed(Ichan2, i)
+                CatTimeIndex = i
+            End If
+        Next i
 		fCatTime = secPerSample * (-TriggerTimeIndex + CatTimeIndex)
 		
 		
 		
 		For i = TriggerTimeIndex / 2 - 25 To TriggerTimeIndex / 2 + 24
-			fCatBase = fCatBase + xData(Ichan2, i)
-		Next i
+            fCatBase = fCatBase + SignalDataSmoothed(Ichan2, i)
+        Next i
 		fCatBase = fCatBase / 50#
 		
 		
 		For i = TriggerTimeIndex / 2 - 25 To TriggerTimeIndex / 2 + 24
-			fCatSq = fCatSq + (fCatBase - xData(Ichan2, i)) ^ 2
-		Next i
+            fCatSq = fCatSq + (fCatBase - SignalDataSmoothed(Ichan2, i)) ^ 2
+        Next i
 		fCatRMS = System.Math.Sqrt(fCatSq / 50#)
 		
 		PrintLine(7, "Cathode Peak,Time,Baseline," & VB6.Format(fCatPeak, "0.000e-00") & "," & VB6.Format(fCatTime, "0.000e-00") & "," & VB6.Format(fCatBase, "0.000e-00"))
@@ -128,11 +130,11 @@ Module PrM
 		' Continue on with anode
 		fAnoPeak = -1000
 		For i = 1500 To IDPoints - 1
-			If xData(Ichan1, i) > fAnoPeak Then
-				fAnoPeak = xData(Ichan1, i)
-				AnoTimeIndex = i
-			End If
-		Next i
+            If SignalDataSmoothed(Ichan1, i) > fAnoPeak Then
+                fAnoPeak = SignalDataSmoothed(Ichan1, i)
+                AnoTimeIndex = i
+            End If
+        Next i
 		fAnoTime = secPerSample * (-TriggerTimeIndex + AnoTimeIndex)
 		
 		' Find the anode base
@@ -145,15 +147,15 @@ Module PrM
 		'    Debug.Print AnoBaselineIndexLow
 		'    Debug.Print AnoBaselineIndexHigh
 		For i = AnoBaselineIndexLow - 50 To AnoBaselineIndexLow + 49
-			'Debug.Print i
-			'Debug.Print fAnoBase
-			fAnoBase = fAnoBase + xData(Ichan1, i)
-		Next i
+            'Debug.Print i
+            'Debug.Print fAnoBase
+            fAnoBase = fAnoBase + SignalDataSmoothed(Ichan1, i)
+        Next i
 		fAnoBase = fAnoBase / 100
 		
 		For i = AnoBaselineIndexLow - 50 To AnoBaselineIndexLow + 49
-			fAnoSq = fAnoSq + (fAnoBase - xData(Ichan1, i)) ^ 2
-		Next i
+            fAnoSq = fAnoSq + (fAnoBase - SignalDataSmoothed(Ichan1, i)) ^ 2
+        Next i
 		fAnoRMS = System.Math.Sqrt(fAnoSq / 100)
 		
 		
@@ -178,17 +180,17 @@ Module PrM
 			a1 = fAnoBase + 0.25 * (fAnoPeak - fAnoBase)
 			a2 = fAnoBase + 0.75 * (fAnoPeak - fAnoBase)
 			For i = AnoRiseStartIndex To AnoTimeIndex
-				If System.Math.Abs(xData(Ichan1, i) - a1) < da1 Then
-					da1 = System.Math.Abs(xData(Ichan1, i) - a1)
-					ta1 = -TriggerTimeIndex * secPerSample + i * secPerSample
-					va1 = xData(Ichan1, i)
-				End If
-				If System.Math.Abs(xData(Ichan1, i) - a2) < da2 Then
-					da2 = System.Math.Abs(xData(Ichan1, i) - a2)
-					ta2 = -TriggerTimeIndex * secPerSample + i * secPerSample
-					va2 = xData(Ichan1, i)
-				End If
-			Next i
+                If System.Math.Abs(SignalDataSmoothed(Ichan1, i) - a1) < da1 Then
+                    da1 = System.Math.Abs(SignalDataSmoothed(Ichan1, i) - a1)
+                    ta1 = -TriggerTimeIndex * secPerSample + i * secPerSample
+                    va1 = SignalDataSmoothed(Ichan1, i)
+                End If
+                If System.Math.Abs(SignalDataSmoothed(Ichan1, i) - a2) < da2 Then
+                    da2 = System.Math.Abs(SignalDataSmoothed(Ichan1, i) - a2)
+                    ta2 = -TriggerTimeIndex * secPerSample + i * secPerSample
+                    va2 = SignalDataSmoothed(Ichan1, i)
+                End If
+            Next i
 			fAnoRise = (ta2 - ta1) * (fAnoPeak - fAnoBase) / (va2 - va1)
 		End If
 		

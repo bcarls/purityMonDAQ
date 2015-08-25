@@ -29,13 +29,11 @@
 	Public WithEvents Combo2 As System.Windows.Forms.ComboBox
 	Public WithEvents Combo1 As System.Windows.Forms.ComboBox
 	Public WithEvents HVWait As System.Windows.Forms.Timer
-    Public WithEvents IPathT As System.Windows.Forms.TextBox
     Public WithEvents _Check4_4 As System.Windows.Forms.CheckBox
     Public WithEvents _Check4_3 As System.Windows.Forms.CheckBox
     Public WithEvents _Check4_2 As System.Windows.Forms.CheckBox
     Public WithEvents _Check4_1 As System.Windows.Forms.CheckBox
     Public WithEvents _Check4_0 As System.Windows.Forms.CheckBox
-    Public WithEvents PathT As System.Windows.Forms.TextBox
     Public WithEvents List3 As System.Windows.Forms.ListBox
     Public WithEvents Text3 As System.Windows.Forms.TextBox
     Public WithEvents List2 As System.Windows.Forms.ListBox
@@ -51,8 +49,6 @@
     Public WithEvents _Label1_1 As System.Windows.Forms.Label
     Public WithEvents Label18 As System.Windows.Forms.Label
     Public WithEvents Label17 As System.Windows.Forms.Label
-    Public WithEvents _Label1_13 As System.Windows.Forms.Label
-    Public WithEvents _Label1_12 As System.Windows.Forms.Label
     Public WithEvents _Label1_10 As System.Windows.Forms.Label
     Public WithEvents _Label1_9 As System.Windows.Forms.Label
     Public WithEvents _Label1_3 As System.Windows.Forms.Label
@@ -63,7 +59,7 @@
     Public WithEvents _Label1_17 As System.Windows.Forms.Label
 	Public WithEvents RunNumL As System.Windows.Forms.Label
 	Public WithEvents _Label1_18 As System.Windows.Forms.Label
-	Public WithEvents RunFileL As System.Windows.Forms.Label
+	Public WithEvents DataPrefLocation As System.Windows.Forms.Label
 	Public WithEvents _Label1_0 As System.Windows.Forms.Label
 	Public WithEvents Check4 As Microsoft.VisualBasic.Compatibility.VB6.CheckBoxArray
 	Public WithEvents Label1 As Microsoft.VisualBasic.Compatibility.VB6.LabelArray
@@ -82,13 +78,11 @@
         Me.Combo2 = New System.Windows.Forms.ComboBox()
         Me.Combo1 = New System.Windows.Forms.ComboBox()
         Me.HVWait = New System.Windows.Forms.Timer(Me.components)
-        Me.IPathT = New System.Windows.Forms.TextBox()
         Me._Check4_4 = New System.Windows.Forms.CheckBox()
         Me._Check4_3 = New System.Windows.Forms.CheckBox()
         Me._Check4_2 = New System.Windows.Forms.CheckBox()
         Me._Check4_1 = New System.Windows.Forms.CheckBox()
         Me._Check4_0 = New System.Windows.Forms.CheckBox()
-        Me.PathT = New System.Windows.Forms.TextBox()
         Me.List3 = New System.Windows.Forms.ListBox()
         Me.Text3 = New System.Windows.Forms.TextBox()
         Me.List2 = New System.Windows.Forms.ListBox()
@@ -104,8 +98,6 @@
         Me._Label1_1 = New System.Windows.Forms.Label()
         Me.Label18 = New System.Windows.Forms.Label()
         Me.Label17 = New System.Windows.Forms.Label()
-        Me._Label1_13 = New System.Windows.Forms.Label()
-        Me._Label1_12 = New System.Windows.Forms.Label()
         Me._Label1_10 = New System.Windows.Forms.Label()
         Me._Label1_9 = New System.Windows.Forms.Label()
         Me._Label1_3 = New System.Windows.Forms.Label()
@@ -116,7 +108,7 @@
         Me._Label1_17 = New System.Windows.Forms.Label()
         Me.RunNumL = New System.Windows.Forms.Label()
         Me._Label1_18 = New System.Windows.Forms.Label()
-        Me.RunFileL = New System.Windows.Forms.Label()
+        Me.DataPrefLocation = New System.Windows.Forms.Label()
         Me._Label1_0 = New System.Windows.Forms.Label()
         Me.Check4 = New Microsoft.VisualBasic.Compatibility.VB6.CheckBoxArray(Me.components)
         Me.Label1 = New Microsoft.VisualBasic.Compatibility.VB6.LabelArray(Me.components)
@@ -146,7 +138,7 @@
         Me.Text7.Cursor = System.Windows.Forms.Cursors.IBeam
         Me.Text7.Font = New System.Drawing.Font("Arial", 8.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Text7.ForeColor = System.Drawing.SystemColors.WindowText
-        Me.Text7.Location = New System.Drawing.Point(24, 585)
+        Me.Text7.Location = New System.Drawing.Point(26, 593)
         Me.Text7.MaxLength = 0
         Me.Text7.Name = "Text7"
         Me.Text7.RightToLeft = System.Windows.Forms.RightToLeft.No
@@ -161,7 +153,7 @@
         Me.Text8.Cursor = System.Windows.Forms.Cursors.IBeam
         Me.Text8.Font = New System.Drawing.Font("Arial", 8.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Text8.ForeColor = System.Drawing.SystemColors.WindowText
-        Me.Text8.Location = New System.Drawing.Point(192, 585)
+        Me.Text8.Location = New System.Drawing.Point(194, 593)
         Me.Text8.MaxLength = 0
         Me.Text8.Name = "Text8"
         Me.Text8.RightToLeft = System.Windows.Forms.RightToLeft.No
@@ -172,7 +164,7 @@
         'Winsock1
         '
         Me.Winsock1.Enabled = True
-        Me.Winsock1.Location = New System.Drawing.Point(600, 640)
+        Me.Winsock1.Location = New System.Drawing.Point(600, 606)
         Me.Winsock1.Name = "Winsock1"
         Me.Winsock1.OcxState = CType(resources.GetObject("Winsock1.OcxState"), System.Windows.Forms.AxHost.State)
         Me.Winsock1.Size = New System.Drawing.Size(28, 28)
@@ -185,7 +177,7 @@
         Me.Combo2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
         Me.Combo2.Font = New System.Drawing.Font("Arial", 8.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Combo2.ForeColor = System.Drawing.SystemColors.WindowText
-        Me.Combo2.Location = New System.Drawing.Point(473, 537)
+        Me.Combo2.Location = New System.Drawing.Point(473, 503)
         Me.Combo2.Name = "Combo2"
         Me.Combo2.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.Combo2.Size = New System.Drawing.Size(129, 22)
@@ -198,7 +190,7 @@
         Me.Combo1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
         Me.Combo1.Font = New System.Drawing.Font("Arial", 8.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Combo1.ForeColor = System.Drawing.SystemColors.WindowText
-        Me.Combo1.Location = New System.Drawing.Point(473, 489)
+        Me.Combo1.Location = New System.Drawing.Point(473, 455)
         Me.Combo1.Name = "Combo1"
         Me.Combo1.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.Combo1.Size = New System.Drawing.Size(129, 22)
@@ -207,22 +199,6 @@
         'HVWait
         '
         Me.HVWait.Interval = 1000
-        '
-        'IPathT
-        '
-        Me.IPathT.AcceptsReturn = True
-        Me.IPathT.BackColor = System.Drawing.SystemColors.Window
-        Me.IPathT.Cursor = System.Windows.Forms.Cursors.IBeam
-        Me.IPathT.Font = New System.Drawing.Font("Arial", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.IPathT.ForeColor = System.Drawing.SystemColors.WindowText
-        Me.IPathT.Location = New System.Drawing.Point(436, 373)
-        Me.IPathT.MaxLength = 0
-        Me.IPathT.Name = "IPathT"
-        Me.IPathT.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.IPathT.Size = New System.Drawing.Size(116, 22)
-        Me.IPathT.TabIndex = 44
-        Me.IPathT.Text = "C:\PrM Images\"
-        Me.IPathT.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
         '
         '_Check4_4
         '
@@ -301,22 +277,6 @@
         Me._Check4_0.Text = "0"
         Me._Check4_0.UseVisualStyleBackColor = False
         '
-        'PathT
-        '
-        Me.PathT.AcceptsReturn = True
-        Me.PathT.BackColor = System.Drawing.SystemColors.Window
-        Me.PathT.Cursor = System.Windows.Forms.Cursors.IBeam
-        Me.PathT.Font = New System.Drawing.Font("Arial", 9.75!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.PathT.ForeColor = System.Drawing.SystemColors.WindowText
-        Me.PathT.Location = New System.Drawing.Point(140, 373)
-        Me.PathT.MaxLength = 0
-        Me.PathT.Name = "PathT"
-        Me.PathT.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.PathT.Size = New System.Drawing.Size(108, 22)
-        Me.PathT.TabIndex = 28
-        Me.PathT.Text = "C:\PrM Log"
-        Me.PathT.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
-        '
         'List3
         '
         Me.List3.BackColor = System.Drawing.SystemColors.Window
@@ -353,10 +313,10 @@
         Me.List2.Font = New System.Drawing.Font("Arial", 8.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.List2.ForeColor = System.Drawing.SystemColors.WindowText
         Me.List2.ItemHeight = 14
-        Me.List2.Location = New System.Drawing.Point(264, 410)
+        Me.List2.Location = New System.Drawing.Point(264, 376)
         Me.List2.Name = "List2"
         Me.List2.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.List2.Size = New System.Drawing.Size(184, 130)
+        Me.List2.Size = New System.Drawing.Size(184, 158)
         Me.List2.TabIndex = 20
         '
         'List1
@@ -366,10 +326,10 @@
         Me.List1.Font = New System.Drawing.Font("Arial", 8.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.List1.ForeColor = System.Drawing.SystemColors.WindowText
         Me.List1.ItemHeight = 14
-        Me.List1.Location = New System.Drawing.Point(77, 410)
+        Me.List1.Location = New System.Drawing.Point(77, 376)
         Me.List1.Name = "List1"
         Me.List1.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.List1.Size = New System.Drawing.Size(184, 130)
+        Me.List1.Size = New System.Drawing.Size(184, 158)
         Me.List1.TabIndex = 19
         '
         'Text2
@@ -447,7 +407,7 @@
         Me._Label1_1.Font = New System.Drawing.Font("Arial", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me._Label1_1.ForeColor = System.Drawing.SystemColors.ControlText
         Me.Label1.SetIndex(Me._Label1_1, CType(1, Short))
-        Me._Label1_1.Location = New System.Drawing.Point(24, 553)
+        Me._Label1_1.Location = New System.Drawing.Point(26, 561)
         Me._Label1_1.Name = "_Label1_1"
         Me._Label1_1.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me._Label1_1.Size = New System.Drawing.Size(249, 23)
@@ -460,7 +420,7 @@
         Me.Label18.Cursor = System.Windows.Forms.Cursors.Default
         Me.Label18.Font = New System.Drawing.Font("Arial", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Label18.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.Label18.Location = New System.Drawing.Point(473, 513)
+        Me.Label18.Location = New System.Drawing.Point(473, 479)
         Me.Label18.Name = "Label18"
         Me.Label18.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.Label18.Size = New System.Drawing.Size(153, 17)
@@ -473,42 +433,12 @@
         Me.Label17.Cursor = System.Windows.Forms.Cursors.Default
         Me.Label17.Font = New System.Drawing.Font("Arial", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Label17.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.Label17.Location = New System.Drawing.Point(473, 465)
+        Me.Label17.Location = New System.Drawing.Point(473, 431)
         Me.Label17.Name = "Label17"
         Me.Label17.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.Label17.Size = New System.Drawing.Size(169, 17)
         Me.Label17.TabIndex = 47
         Me.Label17.Text = "CHl 1 Range:"
-        '
-        '_Label1_13
-        '
-        Me._Label1_13.BackColor = System.Drawing.SystemColors.Control
-        Me._Label1_13.Cursor = System.Windows.Forms.Cursors.Default
-        Me._Label1_13.Font = New System.Drawing.Font("Arial", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me._Label1_13.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.Label1.SetIndex(Me._Label1_13, CType(13, Short))
-        Me._Label1_13.Location = New System.Drawing.Point(292, 375)
-        Me._Label1_13.Name = "_Label1_13"
-        Me._Label1_13.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me._Label1_13.Size = New System.Drawing.Size(137, 34)
-        Me._Label1_13.TabIndex = 43
-        Me._Label1_13.Text = "Image File Path"
-        Me._Label1_13.TextAlign = System.Drawing.ContentAlignment.TopRight
-        '
-        '_Label1_12
-        '
-        Me._Label1_12.BackColor = System.Drawing.SystemColors.Control
-        Me._Label1_12.Cursor = System.Windows.Forms.Cursors.Default
-        Me._Label1_12.Font = New System.Drawing.Font("Arial", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me._Label1_12.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.Label1.SetIndex(Me._Label1_12, CType(12, Short))
-        Me._Label1_12.Location = New System.Drawing.Point(-2, 375)
-        Me._Label1_12.Name = "_Label1_12"
-        Me._Label1_12.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me._Label1_12.Size = New System.Drawing.Size(129, 32)
-        Me._Label1_12.TabIndex = 27
-        Me._Label1_12.Text = "Log File Path"
-        Me._Label1_12.TextAlign = System.Drawing.ContentAlignment.TopRight
         '
         '_Label1_10
         '
@@ -532,7 +462,7 @@
         Me._Label1_9.Font = New System.Drawing.Font("Arial", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me._Label1_9.ForeColor = System.Drawing.SystemColors.ControlText
         Me.Label1.SetIndex(Me._Label1_9, CType(9, Short))
-        Me._Label1_9.Location = New System.Drawing.Point(5, 410)
+        Me._Label1_9.Location = New System.Drawing.Point(5, 376)
         Me._Label1_9.Name = "_Label1_9"
         Me._Label1_9.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me._Label1_9.Size = New System.Drawing.Size(66, 18)
@@ -620,7 +550,7 @@
         Me._Label1_17.Font = New System.Drawing.Font("Arial", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me._Label1_17.ForeColor = System.Drawing.SystemColors.ControlText
         Me.Label1.SetIndex(Me._Label1_17, CType(17, Short))
-        Me._Label1_17.Location = New System.Drawing.Point(146, 293)
+        Me._Label1_17.Location = New System.Drawing.Point(65, 284)
         Me._Label1_17.Name = "_Label1_17"
         Me._Label1_17.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me._Label1_17.Size = New System.Drawing.Size(129, 18)
@@ -635,7 +565,7 @@
         Me.RunNumL.Cursor = System.Windows.Forms.Cursors.Default
         Me.RunNumL.Font = New System.Drawing.Font("Arial", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.RunNumL.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.RunNumL.Location = New System.Drawing.Point(281, 283)
+        Me.RunNumL.Location = New System.Drawing.Point(206, 283)
         Me.RunNumL.Name = "RunNumL"
         Me.RunNumL.RightToLeft = System.Windows.Forms.RightToLeft.No
         Me.RunNumL.Size = New System.Drawing.Size(154, 31)
@@ -649,27 +579,27 @@
         Me._Label1_18.Font = New System.Drawing.Font("Arial", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me._Label1_18.ForeColor = System.Drawing.SystemColors.ControlText
         Me.Label1.SetIndex(Me._Label1_18, CType(18, Short))
-        Me._Label1_18.Location = New System.Drawing.Point(-8, 330)
+        Me._Label1_18.Location = New System.Drawing.Point(-2, 326)
         Me._Label1_18.Name = "_Label1_18"
         Me._Label1_18.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me._Label1_18.Size = New System.Drawing.Size(129, 18)
+        Me._Label1_18.Size = New System.Drawing.Size(197, 18)
         Me._Label1_18.TabIndex = 4
-        Me._Label1_18.Text = "Run FileName"
+        Me._Label1_18.Text = "Data and Pref. Location"
         Me._Label1_18.TextAlign = System.Drawing.ContentAlignment.TopRight
         '
-        'RunFileL
+        'DataPrefLocation
         '
-        Me.RunFileL.BackColor = System.Drawing.Color.White
-        Me.RunFileL.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D
-        Me.RunFileL.Cursor = System.Windows.Forms.Cursors.Default
-        Me.RunFileL.Font = New System.Drawing.Font("Arial", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.RunFileL.ForeColor = System.Drawing.SystemColors.ControlText
-        Me.RunFileL.Location = New System.Drawing.Point(125, 323)
-        Me.RunFileL.Name = "RunFileL"
-        Me.RunFileL.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.RunFileL.Size = New System.Drawing.Size(309, 30)
-        Me.RunFileL.TabIndex = 3
-        Me.RunFileL.TextAlign = System.Drawing.ContentAlignment.TopCenter
+        Me.DataPrefLocation.BackColor = System.Drawing.Color.White
+        Me.DataPrefLocation.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D
+        Me.DataPrefLocation.Cursor = System.Windows.Forms.Cursors.Default
+        Me.DataPrefLocation.Font = New System.Drawing.Font("Arial", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.DataPrefLocation.ForeColor = System.Drawing.SystemColors.ControlText
+        Me.DataPrefLocation.Location = New System.Drawing.Point(206, 323)
+        Me.DataPrefLocation.Name = "DataPrefLocation"
+        Me.DataPrefLocation.RightToLeft = System.Windows.Forms.RightToLeft.No
+        Me.DataPrefLocation.Size = New System.Drawing.Size(228, 30)
+        Me.DataPrefLocation.TabIndex = 3
+        Me.DataPrefLocation.TextAlign = System.Drawing.ContentAlignment.TopCenter
         '
         '_Label1_0
         '
@@ -692,7 +622,7 @@
         '
         Me.CheckBoxDropbox.AutoSize = True
         Me.CheckBoxDropbox.Font = New System.Drawing.Font("Arial", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.CheckBoxDropbox.Location = New System.Drawing.Point(28, 626)
+        Me.CheckBoxDropbox.Location = New System.Drawing.Point(30, 634)
         Me.CheckBoxDropbox.Name = "CheckBoxDropbox"
         Me.CheckBoxDropbox.Size = New System.Drawing.Size(159, 23)
         Me.CheckBoxDropbox.TabIndex = 53
@@ -701,8 +631,8 @@
         '
         'PictureBox1
         '
-        Me.PictureBox1.Image = Global.PrM1A.My.Resources.Resources.FNAL_Logo_NAL_Blue
-        Me.PictureBox1.Location = New System.Drawing.Point(357, 606)
+        Me.PictureBox1.Image = Global.PurityMonDAQ.My.Resources.Resources.FNAL_Logo_NAL_Blue
+        Me.PictureBox1.Location = New System.Drawing.Point(358, 606)
         Me.PictureBox1.Name = "PictureBox1"
         Me.PictureBox1.Size = New System.Drawing.Size(227, 43)
         Me.PictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage
@@ -713,7 +643,7 @@
         '
         Me.CheckBoxiFix.AutoSize = True
         Me.CheckBoxiFix.Font = New System.Drawing.Font("Arial", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.CheckBoxiFix.Location = New System.Drawing.Point(28, 672)
+        Me.CheckBoxiFix.Location = New System.Drawing.Point(30, 680)
         Me.CheckBoxiFix.Name = "CheckBoxiFix"
         Me.CheckBoxiFix.Size = New System.Drawing.Size(118, 23)
         Me.CheckBoxiFix.TabIndex = 55
@@ -725,7 +655,7 @@
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 14.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.SystemColors.Control
-        Me.ClientSize = New System.Drawing.Size(646, 707)
+        Me.ClientSize = New System.Drawing.Size(646, 731)
         Me.Controls.Add(Me.CheckBoxiFix)
         Me.Controls.Add(Me.PictureBox1)
         Me.Controls.Add(Me.CheckBoxDropbox)
@@ -734,13 +664,11 @@
         Me.Controls.Add(Me.Winsock1)
         Me.Controls.Add(Me.Combo2)
         Me.Controls.Add(Me.Combo1)
-        Me.Controls.Add(Me.IPathT)
         Me.Controls.Add(Me._Check4_4)
         Me.Controls.Add(Me._Check4_3)
         Me.Controls.Add(Me._Check4_2)
         Me.Controls.Add(Me._Check4_1)
         Me.Controls.Add(Me._Check4_0)
-        Me.Controls.Add(Me.PathT)
         Me.Controls.Add(Me.List3)
         Me.Controls.Add(Me.Text3)
         Me.Controls.Add(Me.List2)
@@ -751,8 +679,6 @@
         Me.Controls.Add(Me._Label1_1)
         Me.Controls.Add(Me.Label18)
         Me.Controls.Add(Me.Label17)
-        Me.Controls.Add(Me._Label1_13)
-        Me.Controls.Add(Me._Label1_12)
         Me.Controls.Add(Me._Label1_10)
         Me.Controls.Add(Me._Label1_9)
         Me.Controls.Add(Me._Label1_3)
@@ -763,7 +689,7 @@
         Me.Controls.Add(Me._Label1_17)
         Me.Controls.Add(Me.RunNumL)
         Me.Controls.Add(Me._Label1_18)
-        Me.Controls.Add(Me.RunFileL)
+        Me.Controls.Add(Me.DataPrefLocation)
         Me.Controls.Add(Me._Label1_0)
         Me.Cursor = System.Windows.Forms.Cursors.Default
         Me.Font = New System.Drawing.Font("Arial", 8.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
