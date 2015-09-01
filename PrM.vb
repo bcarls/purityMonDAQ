@@ -142,27 +142,27 @@ Module PrM
 		Dim AnoBaselineIndexHigh As Short
 		AnoBaselineIndexLow = CShort(CDbl(TriggerTimeIndex) + 0.666666 * (CDbl(AnoTimeIndex) - CDbl(CatTimeIndex)))
 		AnoBaselineIndexHigh = CShort(CDbl(AnoTimeIndex) + 0.333333 * (CDbl(AnoTimeIndex) - CDbl(CatTimeIndex)))
-		'    Debug.Print AnoTimeIndex
-		'    Debug.Print CatTimeIndex
-		'    Debug.Print AnoBaselineIndexLow
-		'    Debug.Print AnoBaselineIndexHigh
-		For i = AnoBaselineIndexLow - 50 To AnoBaselineIndexLow + 49
+        '    Debug.Print AnoTimeIndex
+        '    Debug.Print CatTimeIndex
+        '    Debug.Print AnoBaselineIndexLow
+        '    Debug.Print AnoBaselineIndexHigh
+        For i = AnoBaselineIndexLow - 200 To AnoBaselineIndexLow + 199
             'Debug.Print i
             'Debug.Print fAnoBase
             fAnoBase = fAnoBase + SignalDataSmoothed(Ichan1, i)
         Next i
-		fAnoBase = fAnoBase / 100
-		
-		For i = AnoBaselineIndexLow - 50 To AnoBaselineIndexLow + 49
+        fAnoBase = fAnoBase / 400
+
+        For i = AnoBaselineIndexLow - 200 To AnoBaselineIndexLow + 199
             fAnoSq = fAnoSq + (fAnoBase - SignalDataSmoothed(Ichan1, i)) ^ 2
         Next i
-		fAnoRMS = System.Math.Sqrt(fAnoSq / 100)
-		
-		
-		
-		
-		
-		Dim istop As Short
+        fAnoRMS = System.Math.Sqrt(fAnoSq / 400)
+
+
+
+
+
+        Dim istop As Short
 		istop = 0
 		Dim a1 As Double
 		Dim a2 As Double
@@ -271,6 +271,7 @@ Module PrM
 
 
         If PrMF.CheckBoxiFix.CheckState = 1 Then
+
             FileCopy(LogPath & "Run" & VB6.Format(iiRun, "000000") & "." & IPrM & "." & iiFile & ".LogData.csv", "Y:\" & "Run" & VB6.Format(iiRun, "000000") & "." & IPrM & "." & iiFile & ".LogData.csv")
         End If
 
@@ -280,7 +281,11 @@ Module PrM
 
         If PrMF.CheckBoxDropbox.CheckState = 1 Then
             FileOpen(7, "C:\Users\bcarls\Dropbox\PrM_Logs\lifetimes_0" & IPrM & "_" & VB6.Format(iiRun, "000000") & ".txt", OpenMode.Output)
-            PrintLine(7, VB6.Format(iiRun, "000000") & " " & Today.Month & " " & Today.Day & " " & Today.Year & " " & VB6.Format(TimeOfDay, " HH mm ss ") & VB6.Format(fLifeTime, "0.000e-00") & " " & VB6.Format(fCatTrue, "0.000e-00") & " " & VB6.Format(fAnoTrue, "0.000e-00") & " " & VB6.Format(CathF, "0.000e-00") & " " & VB6.Format(AnoF, "0.000e-00"))
+            PrintLine(7, VB6.Format(iiRun, "000000") & " " & Today.Month & " " & Today.Day & " " & Today.Year & " " & VB6.Format(TimeOfDay, " HH mm ss ") 
+                & VB6.Format(fLifeTime, "0.000e-00") & " " & VB6.Format(fCatTrue, "0.000e-00") & " " & VB6.Format(fAnoTrue, "0.000e-00") & " " 
+                & VB6.Format(fCatBase, "0.000e-00") & " " & VB6.Format(fAnoBase, "0.000e-00") & " " 
+                & VB6.Format(fCatRMS, "0.000e-00") & " " & VB6.Format(fAnoRMS, "0.000e-00") & " " 
+                & VB6.Format(CathF, "0.000e-00") & " " & VB6.Format(AnoF, "0.000e-00"))
             FileClose(7)
         End If
 
