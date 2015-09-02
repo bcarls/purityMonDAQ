@@ -199,7 +199,12 @@ cmdGetWFMErr:
 		zztime = VB6.Format(TimeOfDay, "hh:mm:ss")
         '''''''''''''''''''''''''''''''
 
+
         '''''''''''''''''''''''''''''''
+
+        ' These variables control when to active the ScopeWait timer in PulserWait timer
+        DoneTakingData = False
+        ScopeWaitTakingData = False
 
         'OneTrueLiquid = 1
         'Label1(1).ToolTipText = "Low is good...Dbl Click to Change"
@@ -403,8 +408,7 @@ cmdGetWFMErr:
             '    StatusL.Caption = "Pulser Turned ON, PrM = " & IPrM
             LiquidWait = 0
         End If
-
-        If Command1.Text = "DAQ Running - Press to Stop" And IPrM = NPrM Then
+        If Command1.Text = "DAQ Running - Press to Stop" And IPrM < NPrM Then
             DataPrefLocation.BackColor = System.Drawing.ColorTranslator.FromOle(&HFF)
             DataPrefLocation.ForeColor = System.Drawing.ColorTranslator.FromOle(&HFFFFFF)
             DataPrefLocation.Text = "Data Not Taken yet No PrM is Selected"
@@ -481,15 +485,12 @@ cmdGetWFMErr:
 
     Private Sub PulserWait_Tick(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles PulserWait.Tick
         PulserWait.Interval = 60000
-        ' PassCnt = PassCnt + 1
-        '    Out Val("&H37a"), 0
-        '    Out Val("&H37a"), 15
-        'Out Val("&H37a"), 0
-        If captureCountSignal < numberOfCapturesSignal Then
+        ' We only want to enable ScopeWait if we are not DoneTakingData and ScopeWaitTakingData isn't true
+        If DoneTakingData = False And ScopeWaitTakingData = False Then
             StatusL.Text = "Taking Data PrM = " & IPrM
             ScopeWait.Enabled = True
         End If
-        If captureCountSignal >= numberOfCapturesSignal Then
+        If DoneTakingData = True And ScopeWaitTakingData = False Then
             IPrM = IPrM + 1
             Do While (IPrM < NPrM)
                 If Check4(IPrM).CheckState = 1 And Check4(IPrM).Enabled = True Then Exit Do
@@ -507,15 +508,7 @@ cmdGetWFMErr:
                 Exit Sub
             End If
             If IPrM < NPrM Then
-                '            RunNumL.Caption = Format(iiRun, "#0000") & "_" & Format(IPrM, "00")
-                '            DataFileName = DataFilePath & "Run_" & Format(iiRun, "000000") & "_" & Format(IPrM, "00") & ".txt"
-                '            RunFileL.Caption = DataFileName
-                '            PulserWait.Interval = 30000
-                '            PulserWait.Enabled = True
-                '           Out Val("&H37a"), 15 'turn on pulser
-                'PassCnt = 0
                 TakeData()
-                '            Out Val("&H378"), IPrM + Data7On 'turn on pulser
                 StatusL.Text = "Pulser Turned ON, PrM = " & IPrM
                 iiFile = 1
             End If
@@ -524,6 +517,8 @@ cmdGetWFMErr:
 
     Private Sub ScopeWait_Tick(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles ScopeWait.Tick
         ScopeWait.Enabled = False
+        ' ScopeWait is now taking data
+        ScopeWaitTakingData = True
 
         'read scope data here
         ' Check to see if the current device is really connected to something
@@ -571,7 +566,6 @@ cmdGetWFMErr:
         Dim recordsPerSec As Double
         Dim bytesTransferred As Integer
         Dim record As Integer
-        Dim fileHandle As Short
         Dim transferTime_sec As Double
         Dim bytesPerSec As Double
         Dim sampleBitShift As Short
@@ -615,7 +609,7 @@ cmdGetWFMErr:
 
         ' TODO: Select the amount of time, in milliseconds, to wait for the
         ' acquisiton to complete to on-board memory
-        captureTimeout_ms = 100000
+        captureTimeout_ms = 200000
 
         ' TODO: Select which channels read from on-board memory (A, B, or both)
         channelMask = CHANNEL_A Or CHANNEL_B
@@ -661,12 +655,6 @@ cmdGetWFMErr:
         samplesPerBuffer = samplesPerRecord + 16
         ReDim buffer(samplesPerBuffer - 1)
 
-        ' Create a data file if required
-        Dim saveData As Boolean
-        If (saveData) Then
-            fileHandle = FreeFile()
-            FileOpen(fileHandle, "file.txt", OpenMode.Output)
-        End If
 
         ' Configure the number of samples per record
         retCode = AlazarSetRecordSize(boardHandle, preTriggerSamples, postTriggerSamples)
@@ -692,15 +680,26 @@ cmdGetWFMErr:
         Dim zzzzzzz As Short
         Dim jj As Short ' check to be sure returned value is an array
 
-        FileOpen(55, AllTracesFileNameSignal, OpenMode.Append)
+        Try
+            FileOpen(55, AllTracesFileNameSignal, OpenMode.Append)
+        Catch ex As Exception
+            MsgBox("File already open for 55 or " & AllTracesFileNameSignal & " and capture number " & captureCountSignal)
+        End Try
+
+
         For captureCountSignal = 0 To numberOfCapturesSignal - 1
 
+
+            ' If it's not the first data taking period, we turn off the HV and Flash-lamp and turn them back on
             If captureCountSignal <> 0 Then
+                Out(Val("&H378"), 8 + Data7On)
+                System.Threading.Thread.Sleep(2000)
                 PrMParallelID = 0
                 If IPrM = 0 Then PrMParallelID = 32
                 If IPrM = 1 Then PrMParallelID = 1
                 If IPrM = 2 Then PrMParallelID = 2
                 Out(Val("&H378"), PrMParallelID + HVOn + Data7On) 'turn on pulser and HV, no inhibit this time since there is no TPC
+                System.Threading.Thread.Sleep(2000)
             End If
 
             ' Update status
@@ -929,29 +928,6 @@ cmdGetWFMErr:
 
 
 
-        ' Average out the noise/signal samples, print out to file
-        FileClose(33)
-        FileOpen(33, DataFileName, OpenMode.Append)
-        PrintLine(33, Today & "  " & TimeOfDay)
-
-        For channel = 0 To channelsPerBoard - 1
-            For i = 0 To preTriggerSamples + postTriggerSamples - 1
-                'For i = LBound(xDataRef, 2) To UBound(xDataRef, 2)
-                NoiseData(channel, i) = NoiseData(channel, i) / recordsPerCaptureNoise
-                PrintLine(33, Str(i / samplesPerSec) & " sec." & vbTab & VB6.Format(NoiseData(channel, i), "0.000000") & " V")
-            Next i
-        Next channel
-
-        ' Average out the signal samples
-        For channel = 0 To channelsPerBoard - 1
-            ' For i = LBound(xData, 2) To UBound(xData, 2)
-            For i = 0 To preTriggerSamples + postTriggerSamples - 1
-                SignalData(channel, i) = SignalData(channel, i) / (recordsPerCaptureSignal * numberOfCapturesSignal)
-                PrintLine(33, Str(i / samplesPerSec) & " sec." & vbTab & VB6.Format(SignalData(channel, i), "0.000000") & " V")
-                ' xData(channel, i) = xData(channel, i) - xDataRef(channel, i)
-            Next i
-        Next channel
-        FileClose(33)
 
 
 
@@ -986,21 +962,34 @@ cmdGetWFMErr:
 
 
 
+        ' Open up file for saving traces
+        FileClose(33)
+        Try
+            FileOpen(33, DataFileName, OpenMode.Append)
+        Catch ex As Exception
+            MsgBox("File already open for 33 or " & DataFileName)
+        End Try
 
 
+        PrintLine(33, Today & "  " & TimeOfDay)
 
+        For channel = 0 To channelsPerBoard - 1
+            For i = 0 To preTriggerSamples + postTriggerSamples - 1
+                'For i = LBound(xDataRef, 2) To UBound(xDataRef, 2)
+                NoiseData(channel, i) = NoiseData(channel, i) / recordsPerCaptureNoise
+                PrintLine(33, Str(i / samplesPerSec) & " sec." & vbTab & VB6.Format(NoiseData(channel, i), "0.000000") & " V")
+            Next i
+        Next channel
 
-
-
-
-
-
-
-
-
-
-
-
+        ' Average out the signal samples
+        For channel = 0 To channelsPerBoard - 1
+            ' For i = LBound(xData, 2) To UBound(xData, 2)
+            For i = 0 To preTriggerSamples + postTriggerSamples - 1
+                SignalData(channel, i) = SignalData(channel, i) / (recordsPerCaptureSignal * numberOfCapturesSignal)
+                PrintLine(33, Str(i / samplesPerSec) & " sec." & vbTab & VB6.Format(SignalData(channel, i), "0.000000") & " V")
+                ' xData(channel, i) = xData(channel, i) - xDataRef(channel, i)
+            Next i
+        Next channel
 
 
 
@@ -1066,13 +1055,6 @@ cmdGetWFMErr:
 
 
 
-
-
-        '    Call DrawAveragedSmoothedRecord(xData, preTriggerSamples + postTriggerSamples, channelsPerBoard)
-
-        ' Open file for writing data to disk
-        FileOpen(33, DataFileName, OpenMode.Append)
-
         ' Print out the noise samples, smoothed
         For channel = 0 To channelsPerBoard - 1
             For i = 0 To preTriggerSamples + postTriggerSamples - 1
@@ -1095,22 +1077,18 @@ cmdGetWFMErr:
 
 
 
-        ' Close the data file
-        If (saveData) Then
-            FileClose(fileHandle)
-        End If
-
-
-
+        captureCountSignal = 0
 
 
         Call Anal_Data()
 
-        captureCountSignal = 0
 
-        Out(Val("&H378"), 8 + Data7On) 'turn off pulser
+        ' We are done taking data for this purity monitor and ScopeWait is no longer taking data
+        DoneTakingData = True
+        ScopeWaitTakingData = False
 
         Exit Sub
+
         'rudimentary error trapping
 cmdGetWFMErr1:
 
@@ -1184,7 +1162,6 @@ cmdGetWFMErr1:
         Dim recordsPerSec As Double
         Dim bytesTransferred As Integer
         Dim record As Integer
-        Dim fileHandle As Short
         Dim sampleBitShift As Short
         Dim codeZero As Object
         Dim codeRange As Short
@@ -1214,12 +1191,6 @@ cmdGetWFMErr1:
         Dim DrawData As Boolean
         DrawData = True
 
-        ' TODO: Select the number of pre-trigger samples per record
-        ' preTriggerSamples = 128
-
-        ' TODO: Select the number of post-trigger samples per record
-        ' postTriggerSamples = 896
-
         preTriggerSamples = 500
 
         ' TODO: Select the number of post-trigger samples per record
@@ -1242,7 +1213,6 @@ cmdGetWFMErr1:
         ' Note on 4/10/2014, 0 is temporarily short
         Dim sampleRateId As Integer
         ' Note on 4/15/2014, the 5 MSPS rate doesn't work for 0, I don't know why
-        'If IPrM = 1 Or IPrM = 2 Then
         If IPrM = 1 Or IPrM = 2 Then
             sampleRateId = SAMPLE_RATE_1MSPS
             samplesPerSec = 1000000
@@ -1277,13 +1247,6 @@ cmdGetWFMErr1:
         ' Note that the buffer must be at least 16 samples larger than the number of samples to transfer
         samplesPerBuffer = samplesPerRecord + 16
         ReDim buffer(samplesPerBuffer - 1)
-
-        ' Create a data file if required
-        Dim saveData As Boolean
-        If (saveData) Then
-            fileHandle = FreeFile()
-            FileOpen(fileHandle, "file.txt", OpenMode.Output)
-        End If
 
         ' Configure the number of samples per record
         retCode = AlazarSetRecordSize(boardHandle, preTriggerSamples, postTriggerSamples)
@@ -1634,9 +1597,11 @@ cmdGetWFMErr1:
 
         HVWait.Interval = 2000
         HVWait.Enabled = True
-		
-		
-	End Sub
+
+        DoneTakingData = False
+
+
+    End Sub
 	
 	' Configure timebase, trigger, and input parameters
 	Private Function ConfigureBoard(ByRef boardHandle As Integer) As Boolean

@@ -42,10 +42,12 @@ Module PrM
 	Public LogPath, DataFileNameHist As String
     Public AllTracesPath, AllTracesFileNameNoise, AllTracesFileNameSignal As String
     Public isubtrch1 As Short
-	Public IPrM, NPrM As Short
-	
-	
-	Sub Anal_Data()
+    Public IPrM, NPrM As Short
+    Public DoneTakingData As Boolean 'Status of whether we're done taking data for a specific purity monitor
+    Public ScopeWaitTakingData As Boolean 'Status of whether or not ScopeWait function is taking signal data or not
+
+
+    Sub Anal_Data()
 		Dim fAnoTrue As Double
 		Dim fCatTrue As Double
 		Dim fCatPeak As Double
@@ -281,11 +283,7 @@ Module PrM
 
         If PrMF.CheckBoxDropbox.CheckState = 1 Then
             FileOpen(7, "C:\Users\bcarls\Dropbox\PrM_Logs\lifetimes_0" & IPrM & "_" & VB6.Format(iiRun, "000000") & ".txt", OpenMode.Output)
-            PrintLine(7, VB6.Format(iiRun, "000000") & " " & Today.Month & " " & Today.Day & " " & Today.Year & " " & VB6.Format(TimeOfDay, " HH mm ss ") 
-                & VB6.Format(fLifeTime, "0.000e-00") & " " & VB6.Format(fCatTrue, "0.000e-00") & " " & VB6.Format(fAnoTrue, "0.000e-00") & " " 
-                & VB6.Format(fCatBase, "0.000e-00") & " " & VB6.Format(fAnoBase, "0.000e-00") & " " 
-                & VB6.Format(fCatRMS, "0.000e-00") & " " & VB6.Format(fAnoRMS, "0.000e-00") & " " 
-                & VB6.Format(CathF, "0.000e-00") & " " & VB6.Format(AnoF, "0.000e-00"))
+            PrintLine(7, VB6.Format(iiRun, "000000") & " " & Today.Month & " " & Today.Day & " " & Today.Year & " " & VB6.Format(TimeOfDay, " HH mm ss ") & VB6.Format(fLifeTime, "0.000e-00") & " " & VB6.Format(fCatTrue, "0.000e-00") & " " & VB6.Format(fAnoTrue, "0.000e-00") & " " & VB6.Format(fCatBase, "0.000e-00") & " " & VB6.Format(fAnoBase, "0.000e-00") & " " & VB6.Format(fCatRMS, "0.000e-00") & " " & VB6.Format(fAnoRMS, "0.000e-00") & " " & VB6.Format(CathF, "0.000e-00") & " " & VB6.Format(AnoF, "0.000e-00"))
             FileClose(7)
         End If
 
