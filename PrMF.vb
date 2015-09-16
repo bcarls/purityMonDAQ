@@ -212,6 +212,7 @@ cmdGetWFMErr:
 
         ' Number of captures to perform during a run
         numberOfCapturesSignal = 4
+        numberOfCapturesNoise = 4
 
         ISmooth = 40
 		IRate = 240
@@ -408,17 +409,17 @@ cmdGetWFMErr:
             '    StatusL.Caption = "Pulser Turned ON, PrM = " & IPrM
             LiquidWait = 0
         End If
-        If Command1.Text = "DAQ Running - Press to Stop" And IPrM < NPrM Then
-            DataPrefLocation.BackColor = System.Drawing.ColorTranslator.FromOle(&HFF)
-            DataPrefLocation.ForeColor = System.Drawing.ColorTranslator.FromOle(&HFFFFFF)
-            DataPrefLocation.Text = "Data Not Taken yet No PrM is Selected"
+        ' If Command1.Text = "DAQ Running - Press to Stop" And IPrM < NPrM Then
+        'DataPrefLocation.BackColor = System.Drawing.ColorTranslator.FromOle(&HFF)
+        'DataPrefLocation.ForeColor = System.Drawing.ColorTranslator.FromOle(&HFFFFFF)
+        'DataPrefLocation.Text = "Data Not Taken yet No PrM is Selected"
 
-            LiquidWait = 1
-            IPrM = 0
-            OKWait.Enabled = True 'wait for liquid to be ok
-            StatusL.Text = "Please select at least one PrM"
+        'LiquidWait = 1
+        'IPrM = 0
+        'OKWait.Enabled = True 'wait for liquid to be ok
+        'StatusL.Text = "Please select at least one PrM"
 
-        End If
+        'End If
 
 
 
@@ -486,7 +487,7 @@ cmdGetWFMErr:
     Private Sub PulserWait_Tick(ByVal eventSender As System.Object, ByVal eventArgs As System.EventArgs) Handles PulserWait.Tick
         PulserWait.Interval = 60000
         ' We only want to enable ScopeWait if we are not DoneTakingData and ScopeWaitTakingData isn't true
-        If DoneTakingData = False And ScopeWaitTakingData = False Then
+        If DoneTakingData = False And ScopeWaitTakingData = False And HVWaitTakingData = False Then
             StatusL.Text = "Taking Data PrM = " & IPrM
             ScopeWait.Enabled = True
         End If
@@ -609,7 +610,7 @@ cmdGetWFMErr:
 
         ' TODO: Select the amount of time, in milliseconds, to wait for the
         ' acquisiton to complete to on-board memory
-        captureTimeout_ms = 200000
+        captureTimeout_ms = 300000
 
         ' TODO: Select which channels read from on-board memory (A, B, or both)
         channelMask = CHANNEL_A Or CHANNEL_B
@@ -690,10 +691,10 @@ cmdGetWFMErr:
         For captureCountSignal = 0 To numberOfCapturesSignal - 1
 
 
-            ' If it's not the first data taking period, we turn off the HV and Flash-lamp and turn them back on
-            If captureCountSignal <> 0 Then
+            ' Turn off the HV and Flash-lamp and turn them back on
+            If captureCountSignal = 0 Or captureCountSignal = 2 Then
                 Out(Val("&H378"), 8 + Data7On)
-                System.Threading.Thread.Sleep(2000)
+                System.Threading.Thread.Sleep(90000)
                 PrMParallelID = 0
                 If IPrM = 0 Then PrMParallelID = 32
                 If IPrM = 1 Then PrMParallelID = 1
@@ -784,17 +785,10 @@ cmdGetWFMErr:
 
             startTickCount = GetTickCount()
             bytesTransferred = 0
-            'PictureBox.AutoRedraw = True
-            'Picture1.AutoRedraw = True
 
 
             For record = 0 To recordsPerCaptureSignal - 1
 
-                ' Erase the previous record
-                'If DrawData = True Then
-                'PictureBox.Cls
-                'Picture1.Cls
-                'End If
 
                 For channel = 0 To channelsPerBoard - 1
 
@@ -927,8 +921,8 @@ cmdGetWFMErr:
 
 
 
-
-
+        ' All done, turn off the pulser
+        Out(Val("&H378"), 8 + Data7On) 'turn off pulser
 
 
 
@@ -1115,7 +1109,8 @@ cmdGetWFMErr1:
         ' Function accumulates noise for later correction
 
         HVWait.Enabled = False
-
+        ' HVWait is now taking data
+        HVWaitTakingData = True
 
 
 
@@ -1197,8 +1192,7 @@ cmdGetWFMErr1:
         postTriggerSamples = 4508
 
         ' TODO: Select the number of records in the acquisition
-        ' Ben: we would eventually like to average over 10 captures
-        recordsPerCaptureNoise = 1
+        recordsPerCaptureNoise = 25
 
         ' TODO: Select the amount of time, in milliseconds, to wait for the
         ' acquisiton to complete to on-board memory
@@ -1208,9 +1202,7 @@ cmdGetWFMErr1:
         channelMask = CHANNEL_A Or CHANNEL_B
 
         ' Select clock parameters as required
-        ' 0, 2, 3 want 1 MSPS
-        ' 1 and 4 want 5 MSPS
-        ' Note on 4/10/2014, 0 is temporarily short
+        Dim PrMParallelID As Short
         Dim sampleRateId As Integer
         ' Note on 4/15/2014, the 5 MSPS rate doesn't work for 0, I don't know why
         If IPrM = 1 Or IPrM = 2 Then
@@ -1266,222 +1258,239 @@ cmdGetWFMErr1:
         ' TextStatus = TextStatus & "Capturing " & recordsPerCapture & " records" & vbCrLf
         ' TextStatus.Refresh
 
-        ' Arm the board to begin the acquisition
-        retCode = AlazarStartCapture(boardHandle)
-        If (retCode <> ApiSuccess) Then
-            MsgBox("Error: AlazarStartCapture failed -- " & AlazarErrorToText(retCode))
-            Exit Sub
-        End If
 
-        ' Wait for the board to capture all records to on-board memory
-        startTickCount = GetTickCount()
-        timeoutTickCount = startTickCount + captureTimeout_ms
-        captureDone = False
+        For captureCountNoise = 0 To numberOfCapturesNoise - 1
 
-        Do While Not captureDone
-            If AlazarBusy(boardHandle) = 0 Then
-                ' All records have been captured to on-board memory
-                captureDone = True
-            ElseIf (GetTickCount() > timeoutTickCount) Then
-                ' The capture timeout expired before the capture completed
-                ' The board may not be triggering, or the capture timeout is too short.
-                MsgBox("Error: Capture timeout for noise data after " & captureTimeout_ms & "ms -- verify trigger")
-                Exit Do
-            Else
-                ' The capture is in progress
-                If GetInputState <> 0 Then System.Windows.Forms.Application.DoEvents()
-                Sleep(10)
+
+            ' If it's not the first data taking period, we turn off the HV and Flash-lamp and turn them back on
+            If captureCountSignal = 2 Then
+                Out(Val("&H378"), 8 + Data7On)
+                System.Threading.Thread.Sleep(90000)
+                PrMParallelID = 0
+                If IPrM = 0 Then PrMParallelID = 32
+                If IPrM = 1 Then PrMParallelID = 1
+                If IPrM = 2 Then PrMParallelID = 2
+                Out(Val("&H378"), PrMParallelID + Data7On) 'turn on pulser, no inhibit this time since there is no TPC
+                System.Threading.Thread.Sleep(2000)
             End If
-        Loop
 
-        ' Abort the acquisition and exit if the acquisition did not complete
-        If Not captureDone Then
-            retCode = AlazarAbortCapture(boardHandle)
+
+            ' Arm the board to begin the acquisition
+            retCode = AlazarStartCapture(boardHandle)
             If (retCode <> ApiSuccess) Then
-                MsgBox("Error: AlazarAbortCapture " & AlazarErrorToText(retCode))
+                MsgBox("Error: AlazarStartCapture failed -- " & AlazarErrorToText(retCode))
+                Exit Sub
             End If
-            Exit Sub
-        End If
 
-        ' Report time to capture all records to on-board memory
-        captureTime_sec = (GetTickCount() - startTickCount) / 1000
-        If (captureTime_sec > 0) Then
-            recordsPerSec = recordsPerCaptureNoise / captureTime_sec
-        Else
-            recordsPerSec = 0
-        End If
-        ' TextStatus = TextStatus & "Captured " & recordsPerCapture & " records in " & _
-        ''    captureTime_sec & " sec (" & Format(recordsPerSec, "0.00e+") & " records / sec)" & vbCrLf
-        ' TextStatus.Refresh
+            ' Wait for the board to capture all records to on-board memory
+            startTickCount = GetTickCount()
+            timeoutTickCount = startTickCount + captureTimeout_ms
+            captureDone = False
 
-        ' Calculate scale factors to convert sample values to volts:
+            Do While Not captureDone
+                If AlazarBusy(boardHandle) = 0 Then
+                    ' All records have been captured to on-board memory
+                    captureDone = True
+                ElseIf (GetTickCount() > timeoutTickCount) Then
+                    ' The capture timeout expired before the capture completed
+                    ' The board may not be triggering, or the capture timeout is too short.
+                    MsgBox("Error: Capture timeout for noise data after " & captureTimeout_ms & "ms -- verify trigger")
+                    Exit Do
+                Else
+                    ' The capture is in progress
+                    If GetInputState <> 0 Then System.Windows.Forms.Application.DoEvents()
+                    Sleep(10)
+                End If
+            Loop
 
-        ' (a) This 12-bit sample code represents a 0V input
-        'UPGRADE_WARNING: Couldn't resolve default property of object codeZero. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6A50421D-15FE-4896-8A1B-2EC21E9037B2"'
-        codeZero = 2 ^ (bitsPerSample - 1) - 0.5
+            ' Abort the acquisition and exit if the acquisition did not complete
+            If Not captureDone Then
+                retCode = AlazarAbortCapture(boardHandle)
+                If (retCode <> ApiSuccess) Then
+                    MsgBox("Error: AlazarAbortCapture " & AlazarErrorToText(retCode))
+                End If
+                Exit Sub
+            End If
 
-        ' (b) This is the range of 14-bit sample codes with respect to 0V level
-        codeRange = 2 ^ (bitsPerSample - 1) - 0.5
+            ' Report time to capture all records to on-board memory
+            captureTime_sec = (GetTickCount() - startTickCount) / 1000
+            If (captureTime_sec > 0) Then
+                recordsPerSec = recordsPerCaptureNoise / captureTime_sec
+            Else
+                recordsPerSec = 0
+            End If
+            ' TextStatus = TextStatus & "Captured " & recordsPerCapture & " records in " & _
+            ''    captureTime_sec & " sec (" & Format(recordsPerSec, "0.00e+") & " records / sec)" & vbCrLf
+            ' TextStatus.Refresh
 
-        ' (c) 12-bit sample codes are stored in the most signficant bits of each 16-bit sample value
-        sampleBitShift = 8 * bytesPerSample - bitsPerSample
+            ' Calculate scale factors to convert sample values to volts:
 
-        ' (d) Mutiply a 12-bit sample code by this amount to get a 16-bit sample value
-        codeToValue = 2 ^ sampleBitShift
+            ' (a) This 12-bit sample code represents a 0V input
+            'UPGRADE_WARNING: Couldn't resolve default property of object codeZero. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6A50421D-15FE-4896-8A1B-2EC21E9037B2"'
+            codeZero = 2 ^ (bitsPerSample - 1) - 0.5
 
-        ' (e) Subtract this amount from a 12-bit sample value to remove the 0V offset
-        'UPGRADE_WARNING: Couldn't resolve default property of object codeZero. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6A50421D-15FE-4896-8A1B-2EC21E9037B2"'
-        offsetValue = codeZero * codeToValue
+            ' (b) This is the range of 14-bit sample codes with respect to 0V level
+            codeRange = 2 ^ (bitsPerSample - 1) - 0.5
 
-        ' (f) Multiply a 16-bit sample value by this factor to convert it to volts
-        'UPGRADE_WARNING: Couldn't resolve default property of object scaleValueChA. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6A50421D-15FE-4896-8A1B-2EC21E9037B2"'
-        scaleValueChA = InputRangeIdToVolts(InputRangeIdChA) / (codeRange * codeToValue)
-        scaleValueChB = InputRangeIdToVolts(InputRangeIdChB) / (codeRange * codeToValue)
+            ' (c) 12-bit sample codes are stored in the most signficant bits of each 16-bit sample value
+            sampleBitShift = 8 * bytesPerSample - bitsPerSample
 
-        ' Transfer records from on-board memory to our buffer, one record at a time
-        ' TextStatus = TextStatus & "Transferring " & recordsPerCapture & " records" & vbCrLf
-        ' TextStatus.Refresh
+            ' (d) Mutiply a 12-bit sample code by this amount to get a 16-bit sample value
+            codeToValue = 2 ^ sampleBitShift
 
-        startTickCount = GetTickCount()
-        bytesTransferred = 0
-        '    PictureBox.AutoRedraw = True
-        '    Picture1.AutoRedraw = True
-        Dim channelName As String
-        Dim scaleValue As Double
-        Dim sampleInRecord As Integer
-        Dim sampleValue As Integer
-        Dim sampleVolts As Double
-        Dim zzzzzzz As Short
-        Dim jj As Short ' check to be sure returned value is an array
+            ' (e) Subtract this amount from a 12-bit sample value to remove the 0V offset
+            'UPGRADE_WARNING: Couldn't resolve default property of object codeZero. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6A50421D-15FE-4896-8A1B-2EC21E9037B2"'
+            offsetValue = codeZero * codeToValue
 
-        FileClose(44)
-        FileOpen(44, AllTracesFileNameNoise, OpenMode.Append)
-        PrintLine(44, Today & "  " & TimeOfDay)
+            ' (f) Multiply a 16-bit sample value by this factor to convert it to volts
+            'UPGRADE_WARNING: Couldn't resolve default property of object scaleValueChA. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6A50421D-15FE-4896-8A1B-2EC21E9037B2"'
+            scaleValueChA = InputRangeIdToVolts(InputRangeIdChA) / (codeRange * codeToValue)
+            scaleValueChB = InputRangeIdToVolts(InputRangeIdChB) / (codeRange * codeToValue)
 
-        For record = 0 To recordsPerCaptureNoise - 1
+            ' Transfer records from on-board memory to our buffer, one record at a time
+            ' TextStatus = TextStatus & "Transferring " & recordsPerCapture & " records" & vbCrLf
+            ' TextStatus.Refresh
 
-            ' Erase the previous record
-            '        If DrawData = True Then
-            '            PictureBox.Cls
-            '            Picture1.Cls
-            '        End If
+            startTickCount = GetTickCount()
+            bytesTransferred = 0
+            '    PictureBox.AutoRedraw = True
+            '    Picture1.AutoRedraw = True
+            Dim channelName As String
+            Dim scaleValue As Double
+            Dim sampleInRecord As Integer
+            Dim sampleValue As Integer
+            Dim sampleVolts As Double
+            Dim zzzzzzz As Short
+            Dim jj As Short ' check to be sure returned value is an array
 
-            For channel = 0 To channelsPerBoard - 1
+            FileClose(44)
+            FileOpen(44, AllTracesFileNameNoise, OpenMode.Append)
+            PrintLine(44, Today & "  " & TimeOfDay)
 
-                ' Get channel Id from channel index
-                channelId = 2 ^ channel
+            For record = 0 To recordsPerCaptureNoise - 1
 
-                ' Skip this channel unless it is in channel mask
-                If (channelMask And channelId) <> 0 Then
+                ' Erase the previous record
+                '        If DrawData = True Then
+                '            PictureBox.Cls
+                '            Picture1.Cls
+                '        End If
 
-                    ' Erase the contents of the arrWF array
-                    ReDim arrWF(1)
+                For channel = 0 To channelsPerBoard - 1
 
-                    ' Transfer one full record from on-board memory to our buffer
-                    retCode = AlazarRead(boardHandle, channelId, buffer(0), bytesPerSample, record + 1, -preTriggerSamples, samplesPerRecord)
-                    If (retCode <> ApiSuccess) Then
-                        MsgBox("Error: AlazarRead failed -- " & AlazarErrorToText(retCode))
-                        Exit Sub
-                    End If
+                    ' Get channel Id from channel index
+                    channelId = 2 ^ channel
 
-                    ' TODO: Process record here.
-                    '
-                    ' Samples values are arranged contiguously in the buffer, with
-                    ' 12-bit sample codes in the most significant bits of each 16-bit
-                    ' sample value.
-                    '
-                    ' Sample codes are unsigned by default so that:
-                    ' - a sample code of 0x000 represents a negative full scale input signal;
-                    ' - a sample code of 0x800 represents a ~0V signal;
-                    ' - a sample code of 0xFFF represents a positive full scale input signal.
+                    ' Skip this channel unless it is in channel mask
+                    If (channelMask And channelId) <> 0 Then
 
-                    ' Save record to file
-                    ' If saveData = True Then
+                        ' Erase the contents of the arrWF array
+                        ReDim arrWF(1)
 
-                    ' Find name and scale factor of this channel
-                    Select Case channelId
-                        Case CHANNEL_A
-                            channelName = "A"
-                            'UPGRADE_WARNING: Couldn't resolve default property of object scaleValueChA. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6A50421D-15FE-4896-8A1B-2EC21E9037B2"'
-                            scaleValue = scaleValueChA
-                        Case CHANNEL_B
-                            channelName = "B"
-                            scaleValue = scaleValueChB
-                        Case Else
-                            MsgBox("Error: Invalid channelId " & channelId)
+                        ' Transfer one full record from on-board memory to our buffer
+                        retCode = AlazarRead(boardHandle, channelId, buffer(0), bytesPerSample, record + 1, -preTriggerSamples, samplesPerRecord)
+                        If (retCode <> ApiSuccess) Then
+                            MsgBox("Error: AlazarRead failed -- " & AlazarErrorToText(retCode))
                             Exit Sub
-                    End Select
+                        End If
 
-                    ' Delimit the start of this record in the file
-                    '                    Print #fileHandle, "--> CH" & channelName & " record " & record + 1 & " begin"
-                    '                    Print #fileHandle, ""
+                        ' TODO: Process record here.
+                        '
+                        ' Samples values are arranged contiguously in the buffer, with
+                        ' 12-bit sample codes in the most significant bits of each 16-bit
+                        ' sample value.
+                        '
+                        ' Sample codes are unsigned by default so that:
+                        ' - a sample code of 0x000 represents a negative full scale input signal;
+                        ' - a sample code of 0x800 represents a ~0V signal;
+                        ' - a sample code of 0xFFF represents a positive full scale input signal.
 
-                    ' Write record samples to file
-                    For sampleInRecord = 0 To samplesPerRecord - 1
+                        ' Save record to file
+                        ' If saveData = True Then
 
-                        ' Get a sample value from the buffer
-                        ' Note that the digitizer returns 16-bit unsigned sample values
-                        ' that are stored in a 16-bit signed integer array, so convert
-                        ' a signed 16-bit value to unsigned.
-                        If (buffer(sampleInRecord) < 0) Then
-                            sampleValue = buffer(sampleInRecord) + 65536
+                        ' Find name and scale factor of this channel
+                        Select Case channelId
+                            Case CHANNEL_A
+                                channelName = "A"
+                                'UPGRADE_WARNING: Couldn't resolve default property of object scaleValueChA. Click for more: 'ms-help://MS.VSCC.v90/dv_commoner/local/redirect.htm?keyword="6A50421D-15FE-4896-8A1B-2EC21E9037B2"'
+                                scaleValue = scaleValueChA
+                            Case CHANNEL_B
+                                channelName = "B"
+                                scaleValue = scaleValueChB
+                            Case Else
+                                MsgBox("Error: Invalid channelId " & channelId)
+                                Exit Sub
+                        End Select
+
+                        ' Delimit the start of this record in the file
+                        '                    Print #fileHandle, "--> CH" & channelName & " record " & record + 1 & " begin"
+                        '                    Print #fileHandle, ""
+
+                        ' Write record samples to file
+                        For sampleInRecord = 0 To samplesPerRecord - 1
+
+                            ' Get a sample value from the buffer
+                            ' Note that the digitizer returns 16-bit unsigned sample values
+                            ' that are stored in a 16-bit signed integer array, so convert
+                            ' a signed 16-bit value to unsigned.
+                            If (buffer(sampleInRecord) < 0) Then
+                                sampleValue = buffer(sampleInRecord) + 65536
+                            Else
+                                sampleValue = buffer(sampleInRecord)
+                            End If
+
+                            ' Convert the sample value to volts
+                            sampleVolts = scaleValue * (sampleValue - offsetValue)
+
+
+                            ' Store new sampleVolts
+                            ReDim Preserve arrWF(UBound(arrWF) + 1)
+                            arrWF(sampleInRecord) = sampleVolts
+
+
+                            PrintLine(44, Str(sampleInRecord / samplesPerSec) & " sec." & vbTab & VB6.Format(sampleVolts, "0.000000") & " V")
+
+                        Next sampleInRecord
+
+                        ' Ben: dummy placeholders
+                        xinc = 0.1
+                        trigpos = preTriggerSamples
+                        vUnits = CStr(1)
+                        hUnits = CStr(1)
+                        xIncr = xinc
+                        XTrig = trigpos
+                        If IsArray(arrWF) Then
+                            zzzzzzz = UBound(arrWF) - LBound(arrWF) + 1
+                            ToolTip1.SetToolTip(StatusL, "Scope Array Size = " & zzzzzzz)
+                            If zzzzzzz > 100000 Then
+                                MsgBox("Array too Large  size= " & zzzzzzz,  , "Fix settings on scope")
+                            End If
+                            IDPoints = UBound(arrWF) - LBound(arrWF) + 1
                         Else
-                            sampleValue = buffer(sampleInRecord)
+                            MsgBox("Error not array " & channel)
                         End If
-
-                        ' Convert the sample value to volts
-                        sampleVolts = scaleValue * (sampleValue - offsetValue)
-
-
-                        ' Store new sampleVolts
-                        ReDim Preserve arrWF(UBound(arrWF) + 1)
-                        arrWF(sampleInRecord) = sampleVolts
-
-
-                        PrintLine(44, Str(sampleInRecord / samplesPerSec) & " sec." & vbTab & VB6.Format(sampleVolts, "0.000000") & " V")
-
-                    Next sampleInRecord
-
-                    ' Ben: dummy placeholders
-                    xinc = 0.1
-                    trigpos = preTriggerSamples
-                    vUnits = CStr(1)
-                    hUnits = CStr(1)
-                    xIncr = xinc
-                    XTrig = trigpos
-                    If IsArray(arrWF) Then
-                        zzzzzzz = UBound(arrWF) - LBound(arrWF) + 1
-                        ToolTip1.SetToolTip(StatusL, "Scope Array Size = " & zzzzzzz)
-                        If zzzzzzz > 100000 Then
-                            MsgBox("Array too Large  size= " & zzzzzzz,  , "Fix settings on scope")
-                        End If
-                        IDPoints = UBound(arrWF) - LBound(arrWF) + 1
-                    Else
-                        MsgBox("Error not array " & channel)
-                    End If
-                    jj = 0
-                    For i = LBound(arrWF) To UBound(arrWF)
-                        If record = 0 Then
-                            NoiseData(channel, jj) = arrWF(i)
-                        Else
-                            NoiseData(channel, jj) = NoiseData(channel, jj) + arrWF(i)
-                        End If
-                        jj = jj + 1
-                    Next i
+                        jj = 0
+                        For i = LBound(arrWF) To UBound(arrWF)
+                            If record = 0 Then
+                                NoiseData(channel, jj) = arrWF(i)
+                            Else
+                                NoiseData(channel, jj) = NoiseData(channel, jj) + arrWF(i)
+                            End If
+                            jj = jj + 1
+                        Next i
 
 
 
-                    bytesTransferred = bytesTransferred + bytesPerRecord
+                        bytesTransferred = bytesTransferred + bytesPerRecord
 
-                End If ' (channelMask And channelId) <> 0
+                    End If ' (channelMask And channelId) <> 0
 
-            Next channel
+                Next channel
 
 
-            If GetInputState <> 0 Then System.Windows.Forms.Application.DoEvents()
+                If GetInputState <> 0 Then System.Windows.Forms.Application.DoEvents()
 
-        Next record
-
+            Next record
+        Next captureCountNoise
 
         FileClose(44)
 
@@ -1497,15 +1506,15 @@ cmdGetWFMErr1:
 
 
 
-
-
-
-        Dim PrMParallelID As Short
         PrMParallelID = 0
         If IPrM = 0 Then PrMParallelID = 32
         If IPrM = 1 Then PrMParallelID = 1
         If IPrM = 2 Then PrMParallelID = 2
         Out(Val("&H378"), PrMParallelID + HVOn + Data7On) 'turn on pulser and HV, no inhibit this time since there is no TPC
+
+
+        ' We are done taking data for this purity monitor and ScopeWait is no longer taking data
+        HVWaitTakingData = False
 
     End Sub
 

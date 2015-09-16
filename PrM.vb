@@ -26,10 +26,11 @@ Module PrM
 	Public xIncr As Double
 	Public XTrig As Integer
     Public LiquidWait, iRunning As Short
-    Public numberOfCapturesSignal As Integer
+    Public numberOfCapturesSignal, numberOfCapturesNoise As Integer
     Public recordsPerCaptureSignal As Integer
     Public recordsPerCaptureNoise As Integer
     Public captureCountSignal As Integer
+    Public captureCountNoise As Integer
     Public SignalData(7, 100000) As Single '0-3 are raw, 4-7 are smoothed
     Public NoiseData(7, 100000) As Single
     Public SignalDataSmoothed(7, 100000) As Single '0-3 are raw, 4-7 are smoothed
@@ -45,6 +46,8 @@ Module PrM
     Public IPrM, NPrM As Short
     Public DoneTakingData As Boolean 'Status of whether we're done taking data for a specific purity monitor
     Public ScopeWaitTakingData As Boolean 'Status of whether or not ScopeWait function is taking signal data or not
+    Public HVWaitTakingData As Boolean 'Status of whether or not HVWait function is taking signal data or not
+
 
 
     Sub Anal_Data()
@@ -84,12 +87,19 @@ Module PrM
         FileOpen(7, DataPrefFilePath & "AnalyzedData.txt", OpenMode.Append)
         FileOpen(77, DataPrefFilePath & "CondensedData.txt", OpenMode.Append)
         PrMF.List1.Items.Clear()
-		PrMF.List2.Items.Clear()
+
+        PrMF.List2.Items.Clear()
         PrintLine(7, Today & " " & TimeOfDay & "," & iiRun & "," & IPrM)
         Print(77, Today & " " & TimeOfDay & "," & iiRun & ",", TAB)
 		PrMF.List1.Items.Add(Today & " " & TimeOfDay)
         PrMF.List1.Items.Add(" Run = " & iiRun & " PrM = " & IPrM)
 
+        Dim preTriggerSamples As Integer
+        Dim postTriggerSamples As Integer
+        ' TODO: Select the number of pre-trigger samples per record
+        preTriggerSamples = 500
+        ' TODO: Select the number of post-trigger samples per record
+        postTriggerSamples = 4508
 
         Dim secPerSample As Double
 		If IPrM = 1 Or IPrM = 2 Then
@@ -102,8 +112,8 @@ Module PrM
 		' Start with cathode
 		Dim i As Short
 		For i = 0 To 1000
-            If SignalDataSmoothed(Ichan2, i) < fCatPeak Then
-                fCatPeak = SignalDataSmoothed(Ichan2, i)
+            If SignalDataSmoothed(Ichan2, i) - NoiseDataSmoothed(Ichan2, i) < fCatPeak Then
+                fCatPeak = SignalDataSmoothed(Ichan2, i) - NoiseDataSmoothed(Ichan2, i)
                 CatTimeIndex = i
             End If
         Next i
@@ -112,13 +122,13 @@ Module PrM
 		
 		
 		For i = TriggerTimeIndex / 2 - 25 To TriggerTimeIndex / 2 + 24
-            fCatBase = fCatBase + SignalDataSmoothed(Ichan2, i)
+            fCatBase = fCatBase + SignalDataSmoothed(Ichan2, i) - NoiseDataSmoothed(Ichan2, i)
         Next i
 		fCatBase = fCatBase / 50#
 		
 		
 		For i = TriggerTimeIndex / 2 - 25 To TriggerTimeIndex / 2 + 24
-            fCatSq = fCatSq + (fCatBase - SignalDataSmoothed(Ichan2, i)) ^ 2
+            fCatSq = fCatSq + (fCatBase - SignalDataSmoothed(Ichan2, i) + NoiseDataSmoothed(Ichan2, i)) ^ 2
         Next i
 		fCatRMS = System.Math.Sqrt(fCatSq / 50#)
 		
@@ -131,13 +141,13 @@ Module PrM
 		
 		' Continue on with anode
 		fAnoPeak = -1000
-		For i = 1500 To IDPoints - 1
-            If SignalDataSmoothed(Ichan1, i) > fAnoPeak Then
-                fAnoPeak = SignalDataSmoothed(Ichan1, i)
+        For i = 1000 To preTriggerSamples + postTriggerSamples - 1
+            If SignalDataSmoothed(Ichan1, i) - NoiseDataSmoothed(Ichan1, i) > fAnoPeak Then
+                fAnoPeak = SignalDataSmoothed(Ichan1, i) - NoiseDataSmoothed(Ichan1, i)
                 AnoTimeIndex = i
             End If
         Next i
-		fAnoTime = secPerSample * (-TriggerTimeIndex + AnoTimeIndex)
+        fAnoTime = secPerSample * (-TriggerTimeIndex + AnoTimeIndex)
 		
 		' Find the anode base
 		Dim AnoBaselineIndexLow As Short
@@ -151,12 +161,12 @@ Module PrM
         For i = AnoBaselineIndexLow - 200 To AnoBaselineIndexLow + 199
             'Debug.Print i
             'Debug.Print fAnoBase
-            fAnoBase = fAnoBase + SignalDataSmoothed(Ichan1, i)
+            fAnoBase = fAnoBase + SignalDataSmoothed(Ichan1, i) - NoiseDataSmoothed(Ichan1, i)
         Next i
         fAnoBase = fAnoBase / 400
 
         For i = AnoBaselineIndexLow - 200 To AnoBaselineIndexLow + 199
-            fAnoSq = fAnoSq + (fAnoBase - SignalDataSmoothed(Ichan1, i)) ^ 2
+            fAnoSq = fAnoSq + (fAnoBase - SignalDataSmoothed(Ichan1, i) + NoiseDataSmoothed(Ichan1, i)) ^ 2
         Next i
         fAnoRMS = System.Math.Sqrt(fAnoSq / 400)
 
@@ -176,21 +186,21 @@ Module PrM
 		Dim ta2 As Double
 		Dim va1 As Double
 		Dim va2 As Double
-		Dim AnoRiseStartIndex As Short
-		AnoRiseStartIndex = TriggerTimeIndex + 0.75 * (AnoTimeIndex - CatTimeIndex)
-		If istop = 0 Then
+        Dim AnoRiseStartIndex As Short
+        AnoRiseStartIndex = TriggerTimeIndex + CShort(0.75 * (AnoTimeIndex - CatTimeIndex))
+        If istop = 0 Then
 			a1 = fAnoBase + 0.25 * (fAnoPeak - fAnoBase)
 			a2 = fAnoBase + 0.75 * (fAnoPeak - fAnoBase)
 			For i = AnoRiseStartIndex To AnoTimeIndex
-                If System.Math.Abs(SignalDataSmoothed(Ichan1, i) - a1) < da1 Then
-                    da1 = System.Math.Abs(SignalDataSmoothed(Ichan1, i) - a1)
+                If System.Math.Abs(SignalDataSmoothed(Ichan1, i) - NoiseDataSmoothed(Ichan1, i) - a1) < da1 Then
+                    da1 = System.Math.Abs(SignalDataSmoothed(Ichan1, i) - NoiseDataSmoothed(Ichan1, i) - a1)
                     ta1 = -TriggerTimeIndex * secPerSample + i * secPerSample
-                    va1 = SignalDataSmoothed(Ichan1, i)
+                    va1 = SignalDataSmoothed(Ichan1, i) - NoiseDataSmoothed(Ichan1, i)
                 End If
-                If System.Math.Abs(SignalDataSmoothed(Ichan1, i) - a2) < da2 Then
-                    da2 = System.Math.Abs(SignalDataSmoothed(Ichan1, i) - a2)
+                If System.Math.Abs(SignalDataSmoothed(Ichan1, i) - NoiseDataSmoothed(Ichan1, i) - a2) < da2 Then
+                    da2 = System.Math.Abs(SignalDataSmoothed(Ichan1, i) - NoiseDataSmoothed(Ichan1, i) - a2)
                     ta2 = -TriggerTimeIndex * secPerSample + i * secPerSample
-                    va2 = SignalDataSmoothed(Ichan1, i)
+                    va2 = SignalDataSmoothed(Ichan1, i) - NoiseDataSmoothed(Ichan1, i)
                 End If
             Next i
 			fAnoRise = (ta2 - ta1) * (fAnoPeak - fAnoBase) / (va2 - va1)
