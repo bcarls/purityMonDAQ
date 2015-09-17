@@ -148,9 +148,17 @@ Module PrM
             End If
         Next i
         fAnoTime = secPerSample * (-TriggerTimeIndex + AnoTimeIndex)
-		
-		' Find the anode base
-		Dim AnoBaselineIndexLow As Short
+
+        ' Find the anode base
+        Dim AnoBaseIndex As Short
+        AnoBaseIndex = AnoTimeIndex - CShort(0.000083 * (1 / secPerSample))
+        fAnoBase = SignalDataSmoothed(Ichan1, AnoBaseIndex) - NoiseDataSmoothed(Ichan1, AnoBaseIndex)
+
+
+
+        Dim fAnoNoiseBase As Double
+        fAnoNoiseBase = 0
+        Dim AnoBaselineIndexLow As Short
 		Dim AnoBaselineIndexHigh As Short
 		AnoBaselineIndexLow = CShort(CDbl(TriggerTimeIndex) + 0.666666 * (CDbl(AnoTimeIndex) - CDbl(CatTimeIndex)))
 		AnoBaselineIndexHigh = CShort(CDbl(AnoTimeIndex) + 0.333333 * (CDbl(AnoTimeIndex) - CDbl(CatTimeIndex)))
@@ -161,12 +169,12 @@ Module PrM
         For i = AnoBaselineIndexLow - 200 To AnoBaselineIndexLow + 199
             'Debug.Print i
             'Debug.Print fAnoBase
-            fAnoBase = fAnoBase + SignalDataSmoothed(Ichan1, i) - NoiseDataSmoothed(Ichan1, i)
+            fAnoNoiseBase = fAnoNoiseBase + SignalDataSmoothed(Ichan1, i) - NoiseDataSmoothed(Ichan1, i)
         Next i
-        fAnoBase = fAnoBase / 400
+        fAnoNoiseBase = fAnoNoiseBase / 400
 
         For i = AnoBaselineIndexLow - 200 To AnoBaselineIndexLow + 199
-            fAnoSq = fAnoSq + (fAnoBase - SignalDataSmoothed(Ichan1, i) + NoiseDataSmoothed(Ichan1, i)) ^ 2
+            fAnoSq = fAnoSq + (fAnoNoiseBase - SignalDataSmoothed(Ichan1, i) + NoiseDataSmoothed(Ichan1, i)) ^ 2
         Next i
         fAnoRMS = System.Math.Sqrt(fAnoSq / 400)
 
